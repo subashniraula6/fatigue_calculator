@@ -1,0 +1,42 @@
+{
+    "description": {
+        "period": "24:00",
+        "work": "12:00",
+        "rest": "12:00",
+        "breach": "None (EWD 8 min provision)"
+    },
+    "ewd": [
+        {
+            "eventType": "Work",
+            "startTime": "2018-05-01T10:00+10:00"
+        },
+        {
+            "eventType": "Rest",
+            "startTime": "2018-05-01T15:00+10:00"
+        },
+        {
+            "eventType": "Work",
+            "startTime": "2018-05-01T15:30+10:00"
+        },
+        {
+            "eventType": "Rest",
+            "startTime": "2018-05-01T20:30+10:00"
+        },
+        {
+            "eventType": "Work",
+            "startTime": "2018-05-01T20:55+10:00"
+        },
+        {
+            "eventType": "Rest",
+            "startTime": "2018-05-01T22:55+10:00"
+        },
+        {
+            "eventType": "Work",
+            "startTime": "2018-05-02T10:00+10:00"
+        },
+        {
+            "eventType": "Rest",
+            "startTime": "2018-05-02T11:00+10:00"
+        }
+    ]
+}

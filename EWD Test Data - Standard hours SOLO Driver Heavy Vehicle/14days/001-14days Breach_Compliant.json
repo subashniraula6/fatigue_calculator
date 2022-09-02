@@ -1,0 +1,306 @@
+{
+    "description": {
+        "period": "336:00",
+        "work": "144:00",
+        "rest": "192:00",
+        "breach": "None"
+    },
+    "ewd": [
+        {
+            "eventType": "Work",
+            "startTime": "2018-05-01T10:00+10:00"
+        },
+        {
+            "eventType": "Rest",
+            "startTime": "2018-05-01T15:00+10:00"
+        },
+        {
+            "eventType": "Work",
+            "startTime": "2018-05-01T15:30+10:00"
+        },
+        {
+            "eventType": "Rest",
+            "startTime": "2018-05-01T20:30+10:00"
+        },
+        {
+            "eventType": "Work",
+            "startTime": "2018-05-01T21:00+10:00"
+        },
+        {
+            "eventType": "Rest",
+            "startTime": "2018-05-01T23:00+10:00"
+        },
+        {
+            "eventType": "Work",
+            "startTime": "2018-05-02T10:00+10:00"
+        },
+        {
+            "eventType": "Rest",
+            "startTime": "2018-05-02T15:00+10:00"
+        },
+        {
+            "eventType": "Work",
+            "startTime": "2018-05-02T15:30+10:00"
+        },
+        {
+            "eventType": "Rest",
+            "startTime": "2018-05-02T20:30+10:00"
+        },
+        {
+            "eventType": "Work",
+            "startTime": "2018-05-02T21:00+10:00"
+        },
+        {
+            "eventType": "Rest",
+            "startTime": "2018-05-02T23:00+10:00"
+        },
+        {
+            "eventType": "Work",
+            "startTime": "2018-05-03T10:00+10:00"
+        },
+		{
+            "eventType": "Rest",
+            "startTime": "2018-05-03T15:00+10:00"
+        },
+        {
+            "eventType": "Work",
+            "startTime": "2018-05-03T15:30+10:00"
+        },
+        {
+            "eventType": "Rest",
+            "startTime": "2018-05-03T20:30+10:00"
+        },
+        {
+            "eventType": "Work",
+            "startTime": "2018-05-03T21:00+10:00"
+        },
+        {
+            "eventType": "Rest",
+            "startTime": "2018-05-03T23:00+10:00"
+        },
+        {
+            "eventType": "Work",
+            "startTime": "2018-05-04T10:00+10:00"
+        },
+		{
+            "eventType": "Rest",
+            "startTime": "2018-05-04T15:00+10:00"
+        },
+        {
+            "eventType": "Work",
+            "startTime": "2018-05-04T15:30+10:00"
+        },
+        {
+            "eventType": "Rest",
+            "startTime": "2018-05-04T20:30+10:00"
+        },
+        {
+            "eventType": "Work",
+            "startTime": "2018-05-04T21:00+10:00"
+        },
+        {
+            "eventType": "Rest",
+            "startTime": "2018-05-04T23:00+10:00"
+        },
+        {
+            "eventType": "Work",
+            "startTime": "2018-05-05T10:00+10:00"
+        },
+		{
+            "eventType": "Rest",
+            "startTime": "2018-05-05T15:00+10:00"
+        },
+        {
+            "eventType": "Work",
+            "startTime": "2018-05-05T15:30+10:00"
+        },
+        {
+            "eventType": "Rest",
+            "startTime": "2018-05-05T20:30+10:00"
+        },
+        {
+            "eventType": "Work",
+            "startTime": "2018-05-05T21:00+10:00"
+        },
+        {
+            "eventType": "Rest",
+            "startTime": "2018-05-05T23:00+10:00"
+        },
+        {
+            "eventType": "Work",
+            "startTime": "2018-05-06T10:00+10:00"
+        },
+		{
+            "eventType": "Rest",
+            "startTime": "2018-05-06T15:00+10:00"
+        },
+        {
+            "eventType": "Work",
+            "startTime": "2018-05-06T15:30+10:00"
+        },
+        {
+            "eventType": "Rest",
+            "startTime": "2018-05-06T20:30+10:00"
+        },
+        {
+            "eventType": "Work",
+            "startTime": "2018-05-06T21:00+10:00"
+        },
+        {
+            "eventType": "Rest",
+            "startTime": "2018-05-06T23:00+10:00"
+        },
+		{
+            "eventType": "Work",
+            "startTime": "2018-05-08T10:00+10:00"
+        },
+        {
+            "eventType": "Rest",
+            "startTime": "2018-05-08T15:00+10:00"
+        },
+        {
+            "eventType": "Work",
+            "startTime": "2018-05-08T15:30+10:00"
+        },
+        {
+            "eventType": "Rest",
+            "startTime": "2018-05-08T20:30+10:00"
+        },
+        {
+            "eventType": "Work",
+            "startTime": "2018-05-08T21:00+10:00"
+        },
+        {
+            "eventType": "Rest",
+            "startTime": "2018-05-08T23:00+10:00"
+        },
+        {
+            "eventType": "Work",
+            "startTime": "2018-05-09T10:00+10:00"
+        },
+        {
+            "eventType": "Rest",
+            "startTime": "2018-05-09T15:00+10:00"
+        },
+        {
+            "eventType": "Work",
+            "startTime": "2018-05-09T15:30+10:00"
+        },
+        {
+            "eventType": "Rest",
+            "startTime": "2018-05-09T20:30+10:00"
+        },
+        {
+            "eventType": "Work",
+            "startTime": "2018-05-09T21:00+10:00"
+        },
+        {
+            "eventType": "Rest",
+            "startTime": "2018-05-09T23:00+10:00"
+        },
+        {
+            "eventType": "Work",
+            "startTime": "2018-05-10T10:00+10:00"
+        },
+		{
+            "eventType": "Rest",
+            "startTime": "2018-05-10T15:00+10:00"
+        },
+        {
+            "eventType": "Work",
+            "startTime": "2018-05-10T15:30+10:00"
+        },
+        {
+            "eventType": "Rest",
+            "startTime": "2018-05-10T20:30+10:00"
+        },
+        {
+            "eventType": "Work",
+            "startTime": "2018-05-10T21:00+10:00"
+        },
+        {
+            "eventType": "Rest",
+            "startTime": "2018-05-10T23:00+10:00"
+        },
+        {
+            "eventType": "Work",
+            "startTime": "2018-05-11T10:00+10:00"
+        },
+		{
+            "eventType": "Rest",
+            "startTime": "2018-05-11T15:00+10:00"
+        },
+        {
+            "eventType": "Work",
+            "startTime": "2018-05-11T15:30+10:00"
+        },
+        {
+            "eventType": "Rest",
+            "startTime": "2018-05-11T20:30+10:00"
+        },
+        {
+            "eventType": "Work",
+            "startTime": "2018-05-11T21:00+10:00"
+        },
+        {
+            "eventType": "Rest",
+            "startTime": "2018-05-11T23:00+10:00"
+        },
+        {
+            "eventType": "Work",
+            "startTime": "2018-05-12T10:00+10:00"
+        },
+		{
+            "eventType": "Rest",
+            "startTime": "2018-05-12T15:00+10:00"
+        },
+        {
+            "eventType": "Work",
+            "startTime": "2018-05-12T15:30+10:00"
+        },
+        {
+            "eventType": "Rest",
+            "startTime": "2018-05-12T20:30+10:00"
+        },
+        {
+            "eventType": "Work",
+            "startTime": "2018-05-12T21:00+10:00"
+        },
+        {
+            "eventType": "Rest",
+            "startTime": "2018-05-12T23:00+10:00"
+        },
+        {
+            "eventType": "Work",
+            "startTime": "2018-05-13T10:00+10:00"
+        },
+		{
+            "eventType": "Rest",
+            "startTime": "2018-05-13T15:00+10:00"
+        },
+        {
+            "eventType": "Work",
+            "startTime": "2018-05-13T15:30+10:00"
+        },
+        {
+            "eventType": "Rest",
+            "startTime": "2018-05-13T20:30+10:00"
+        },
+        {
+            "eventType": "Work",
+            "startTime": "2018-05-13T21:00+10:00"
+        },
+        {
+            "eventType": "Rest",
+            "startTime": "2018-05-13T23:00+10:00"
+        },
+        {
+            "eventType": "Work",
+            "startTime": "2018-05-15T10:00+10:00"
+        },
+        {
+            "eventType": "Rest",
+            "startTime": "2018-05-15T11:00+10:00"
+        }
+    ]
+}
