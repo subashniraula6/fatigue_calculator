@@ -1,3 +1,10 @@
+## Installation
+
+breach_calculator requires [Node.js](https://nodejs.org/) to run.
+
+Install the dependencies 
+
+```sh
 cd breach_calculator
 npm install
 ```
