@@ -15,6 +15,6 @@ Steps
 *Note: You can change dataset file path to run test on different datasets.*
 2. After dataset file is selected Run:
 ```sh
-npm index.js
+node index.js
 ```
 3. Observe the output
