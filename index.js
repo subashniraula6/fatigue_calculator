@@ -1,4 +1,4 @@
-const testBreaches = require("./core")["testBreaches"];
+const BreachCalculator = require("./core")["BreachCalculator"];
 //RuleSets
 var ruleSets = require("./ruleSets")["ruleSets"];
 //DataSets
@@ -7,14 +7,14 @@ var dataSet = require("./EWD Test Data - Standard hours SOLO Driver Heavy Vehicl
 // SYSTEM STATE
 let STATE = {
   dataSet: [],
-  breachChecklist: [],
+  checklist: [],
   maxWorkBreaches: [],
   restBreaches: [],
   noBreaches: [],
   potentalBreaches: [],
 };
 
-testBreaches(STATE, dataSet["ewd"], ruleSets);
+BreachCalculator(STATE, dataSet["ewd"], ruleSets);
 
 // Print final state
 console.log("FINAL STATE", JSON.stringify(STATE));

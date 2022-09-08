@@ -22,7 +22,7 @@ function processEvent(event) {
 }
 
 // UPDATE CHECKLIST ITEM
-function _updateChecklistItem(checklistItem, event, state) {
+function __updateChecklistItem(checklistItem, event, state) {
   console.log("FOR CHECKLIST ITEM", checklistItem);
   console.log("+++++++++++++++++++++++++++++++++++++++++++");
 
@@ -45,32 +45,34 @@ function _updateChecklistItem(checklistItem, event, state) {
     return updatedChecklistItem;
   }
 
-  updatedItem = __calculateBreach(updatedItem, ruleSets);
-  function __calculateBreach(checklistItem, ruleSets) {
-    console.log("BREACH CALCULATION");
+  // updatedItem = __calculateBreach(updatedItem, ruleSets);
+  // function __calculateBreach(checklistItem, ruleSets) {
+  //   console.log("BREACH CALCULATION");
 
-    const breachCalculation = new BreachCalculation(checklistItem, ruleSets);
+  //   const breachCalculation = new BreachCalculation(checklistItem, ruleSets);
 
-    // 1. MAXIMUM WORK BREACH
-    var updatedChecklistItem = breachCalculation._calculateMaxWorkBreach();
+  //   // 1. MAXIMUM WORK BREACH
+  //   var updatedChecklistItem = breachCalculation._calculateMaxWorkBreach();
 
-    console.log(".........................................................");
-    console.log("SELECTED BREACH");
-    console.log(updatedChecklistItem["breaches"]);
+  //   console.log(".........................................................");
+  //   console.log("SELECTED BREACH");
+  //   console.log(updatedChecklistItem["breaches"]);
 
-    // 2. REST BREAKS BREACH
-    var updatedChecklistItem = breachCalculation._calculateRestBreach(
-      ruleSets,
-      updatedChecklistItem
-    );
-    console.log("AFTER REST BREACH", updatedChecklistItem);
+  //   // 2. REST BREAKS BREACH
+  //   var updatedChecklistItem = breachCalculation._calculateRestBreach(
+  //     ruleSets,
+  //     updatedChecklistItem
+  //   );
+  //   console.log("AFTER REST BREACH", updatedChecklistItem);
 
-    return updatedChecklistItem;
-  }
+  //   return updatedChecklistItem;
+  // }
+
+  
 
   // Update before cleanup
   console.log("UPDATING STATE");
-  console.log(JSON.stringify(updatedItem))
+  console.log(JSON.stringify(updatedItem));
   updateState(updatedItem, state);
   function updateState(updatedItem, state) {
     // Max work breaches
@@ -81,7 +83,7 @@ function _updateChecklistItem(checklistItem, event, state) {
         } else if (breach["type"] === "maxWorkBreach") {
           state.maxWorkBreaches.push(updatedItem);
         } else {
-          console.log("I am here")
+          console.log("I am here");
           state.restBreaches.push(updatedItem);
         }
       });
@@ -117,7 +119,7 @@ function _updateChecklistItem(checklistItem, event, state) {
   return updatedItem;
 }
 
-function _addChecklistItems(breachChecklist, ruleSets, event) {
+function _addChecklistItems(checklist, ruleSets, event) {
   if (event["eventType"] === "work") {
     console.log("ADDING - CHECKLIST ITEMS");
     var ruleSetName = ruleSets[0]["rulesetName"];
@@ -128,7 +130,7 @@ function _addChecklistItems(breachChecklist, ruleSets, event) {
         minutes: rule["period"],
       });
 
-      breachChecklist.push({
+      checklist.push({
         periodType: rule["period"] / 60,
         periodStart: toUtc(event["startTime"]),
         ruleSets: ruleSetName,
@@ -151,45 +153,59 @@ function _addChecklistItems(breachChecklist, ruleSets, event) {
   }
 }
 
-function eventHandler(state, event, ruleSets) {
-  let { dataSet, breachChecklist } = state;
-  //push event to dataset
-  dataSet.push(event);
+function BreachCalculator(state, events, ruleSets) {
+  function _handleEvent(event) {
+    let { dataSet, checklist } = state;
+    //push event to dataset
+    dataSet.push(event);
 
-  // process event
-  var event = processEvent(event);
+    // process event
+    var event = processEvent(event);
 
-  console.log("NEW EVENT", event);
-  console.log("=================================================");
+    console.log("NEW EVENT", event);
+    console.log("=================================================");
 
-  //Update checklist
-  breachChecklist.forEach((checklistItem, index, breachChecklist) => {
-    let updatedChecklistItem = _updateChecklistItem(
-      checklistItem,
-      event,
-      state
+    function _updateCurrentChecklist(_event, checklist) {
+      return checklist.map((checklistItem) => {
+        return __updateChecklistItem(checklistItem, _event, state);
+      });
+    }
+
+    //Update checklist
+    checklist = _updateCurrentChecklist(event, checklist);
+
+
+    // //Update checklist
+    // checklist.forEach((checklistItem, index, checklist) => {
+    //   let updatedChecklistItem = __updateChecklistItem(
+    //     checklistItem,
+    //     event,
+    //     state
+    //   );
+    //   console.log(updatedChecklistItem);
+    //   checklist[index] = updatedChecklistItem;
+    // });
+    console.log("checklist", checklist);
+
+    // Add new checklist
+    _addChecklistItems(checklist, ruleSets, event);
+    // Filter null checklist
+    state.checklist = checklist.filter(
+      (checklistItem) => checklistItem !== null
     );
-    console.log(updatedChecklistItem);
-    breachChecklist[index] = updatedChecklistItem;
-  });
-  console.log("breachChecklist", breachChecklist);
+    console.log(".........................................................");
+    console.log("BREACH CHECKLIST AFTER FILTERING");
+    console.log(checklist);
+    console.log(".........................................................");
+  }
 
-  // Add new checklist
-  _addChecklistItems(breachChecklist, ruleSets, event);
-  // Filter null breachCheckList
-  state.breachChecklist = breachChecklist.filter(
-    (checklistItem) => checklistItem !== null
-  );
-  console.log(".........................................................");
-  console.log("BREACH CHECKLIST AFTER FILTERING");
-  console.log(breachChecklist);
-  console.log(".........................................................");
+  if (Array.isArray(events)) {
+    events.forEach((event) => {
+      _handleEvent(event);
+    });
+  } else {
+    _handleEvent(events);
+  }
 }
 
-function testBreaches(state, events, ruleSets) {
-  events.forEach((event) => {
-    eventHandler(state, event, ruleSets);
-  });
-}
-
-module.exports = { testBreaches };
+module.exports = { BreachCalculator };
