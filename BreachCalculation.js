@@ -41,9 +41,7 @@ class BreachCalculation {
           let from = range["from"];
           let to = range["to"];
           if (totalRestBreakMinutes < from && totalRestBreakMinutes >= to) {
-            let description = `Rest less than ${minutesToHourMinutes(
-              from
-            )}`;
+            let description = `Rest less than ${minutesToHourMinutes(from)}`;
             if (to !== 0) {
               description += ` and greater than ${minutesToHourMinutes(to)}`;
             }
@@ -65,7 +63,7 @@ class BreachCalculation {
       console.log(
         `No breach calculation required => Since checklist totalPeriod(${totalPeriod}) < or maxMinutes(${maxMinutes})`
       );
-      return this.checklistItem;
+      return null;
       // TODO: estimation of work hour breaches
     }
 
@@ -76,7 +74,7 @@ class BreachCalculation {
       console.log(
         `No Max Work Breach since checklist total work(${totalWork}) is less than or equal to max minutes(${maxMinutes})`
       );
-      return this.checklistItem;
+      return null;
     }
 
     // fetch rule for the period
@@ -86,7 +84,7 @@ class BreachCalculation {
     var maximumWorkBreachRule = rule["maximumWorkBreach"];
 
     var arr = Object.entries(maximumWorkBreachRule);
-    var breach = arr.find((a) => {
+    var selectedBreach = arr.find((a) => {
       let from = a[1]["from"];
       let to = a[1]["to"];
       return totalWork >= from && totalWork <= to;
@@ -94,29 +92,31 @@ class BreachCalculation {
 
     // If not in a range
     // Set breach to highest breach range
-    if (!breach) {
+    if (!selectedBreach) {
       let sortedBreaches = arr.sort(
         (left, right) => right[1].from - left[1].from
       );
-      breach = sortedBreaches[0];
+      selectedBreach = sortedBreaches[0];
     }
     // update breach to checklist item
     let description = null;
-    if (breach) {
-      description = `Work more than ${minutesToHourMinutes(
-        breach[1]["from"]
-      )}`;
-      if (breach[1]["to"] !== 0) {
-        description += ` and less than ${minutesToHourMinutes(breach[1]["to"])}`;
+    if (selectedBreach) {
+      description = `Work more than ${minutesToHourMinutes(selectedBreach[1]["from"])}`;
+      if (selectedBreach[1]["to"] !== 0) {
+        description += ` and less than ${minutesToHourMinutes(
+          selectedBreach[1]["to"]
+        )}`;
       }
     }
-    this.checklistItem.breaches.push({
-      severity: breach[0],
+    var breach = {
+      severity: selectedBreach[0],
       type: "maxWorkBreach",
       description,
-    });
-
-    return this.checklistItem;
+    };
+    return {
+      ...this.checklistItem,
+      breach
+    };
   }
 
   _calculateRestBreach() {
@@ -127,7 +127,7 @@ class BreachCalculation {
       console.log(
         `No rest breach calculation required => Since checklist totalPeriod(${totalPeriod}) < or maxMinutes(${maxMinutes})`
       );
-      return this.checklistItem;
+      return null;
       // TODO: estimation of rest hour breaches
     }
 
@@ -199,11 +199,8 @@ class BreachCalculation {
         restBreakRule
       );
       console.log("REST BREACH CALCULATED: ", breach);
-
-      this.checklistItem["breaches"].push(breach);
-    }
-
-    return this.checklistItem;
+      return { ...this.checklistItem, breach };
+    } else return null;
   }
 }
 
