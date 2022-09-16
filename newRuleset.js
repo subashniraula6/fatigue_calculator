@@ -150,6 +150,11 @@ var rulesets = [
           {
             level: "minor",
             from: 6.25,
+            to: 6.75,
+          },
+          {
+            level: "noBreach",
+            from: 6.75,
             to: 7,
           },
         ],
@@ -223,6 +228,11 @@ var rulesets = [
           {
             level: "minor",
             from: 23.25,
+            to: 23.75,
+          },
+          {
+            level: "noBreach",
+            from: 23.75,
             to: 24,
           },
         ],
@@ -296,6 +306,11 @@ var rulesets = [
           {
             level: "minor",
             from: 6.25,
+            to: 6.75,
+          },
+          {
+            level: "noBreach",
+            from: 6.75,
             to: 7,
           },
         ],
@@ -325,6 +340,11 @@ var rulesets = [
           {
             level: "minor",
             from: 6.25,
+            to: 6.75,
+          },
+          {
+            level: "noBreach",
+            from: 6.75,
             to: 7,
           },
         ],
