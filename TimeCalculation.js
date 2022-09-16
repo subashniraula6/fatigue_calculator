@@ -40,7 +40,7 @@ class TimeCalculation {
   }
 
   _calculateWorkTime() {
-    let { startTime: newEventStartTime } = this.event;
+    let { startTime: newEventStartTime, eventType: newEventType } = this.event;
     let {
       totalWork,
       totalPeriod,
@@ -51,7 +51,7 @@ class TimeCalculation {
     } = this.checklistItem;
 
     let workDuration = 0;
-    if (lastEvent === "work") {
+    if (lastEvent === "work" && newEventType === 'rest') {
       if (totalPeriod >= periodType * 60) {
         // period exceeds
         workDuration = moment
@@ -74,7 +74,7 @@ class TimeCalculation {
   }
 
   _calculateRestTime() {
-    let { startTime: newEventStartTime, eventType } = this.event;
+    let { startTime: newEventStartTime, eventType: newEventType } = this.event;
     let {
       totalRest,
       totalPeriod,
@@ -85,7 +85,7 @@ class TimeCalculation {
     } = this.checklistItem;
 
     let restDuration = 0;
-    if (lastEvent === "rest") {
+    if (lastEvent === "rest" && newEventType === 'work') {
       // 1. Total rest
       if (totalPeriod > periodType * 60) {
         // period exceeds
@@ -106,7 +106,7 @@ class TimeCalculation {
 
       // 1. Continuous Break
       //Check for continuous break
-      var roundedDuration = this.__roundNearest15(restDuration, eventType);
+      var roundedDuration = this.__roundNearest15(restDuration, lastEvent);
 
       var existingBreakIndex = this.checklistItem["breaks"][
         "continuousBreaks"

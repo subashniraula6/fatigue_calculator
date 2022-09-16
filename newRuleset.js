@@ -8,12 +8,12 @@ var rulesets = [
         maximumWorkTime: 5.25,
         breaches: [
           {
-            severity: "nobreach",
+            level: "nobreach",
             from: 316,
             to: 323,
           },
           {
-            severity: "breach",
+            level: "breach",
             from: 324,
             to: 330,
           },
@@ -31,17 +31,17 @@ var rulesets = [
         maximumWorkTime: 7.5,
         breaches: [
           {
-            severity: "nobreach",
+            level: "nobreach",
             from: 451,
             to: 458,
           },
           {
-            severity: "breach",
+            level: "breach",
             from: 459,
             to: 465,
           },
           {
-            severity: "minor",
+            level: "minor",
             from: 466,
             to: 0,
           },
@@ -59,22 +59,22 @@ var rulesets = [
         maximumWorkTime: 10,
         breaches: [
           {
-            severity: "nobreach",
+            level: "nobreach",
             from: 601,
             to: 608,
           },
           {
-            severity: "breach",
+            level: "breach",
             from: 609,
             to: 615,
           },
           {
-            severity: "minor",
+            level: "minor",
             from: 616,
             to: 645,
           },
           {
-            severity: "substantial",
+            level: "substantial",
             from: 646,
             to: 0,
           },
@@ -88,7 +88,7 @@ var rulesets = [
     period: 1440,
     work: [
       {
-        name: "7.5 hours work time",
+        name: "12 hours work time",
         maximumWorkTime: 12,
         breaches: [
           {
@@ -159,7 +159,44 @@ var rulesets = [
   {
     name: "7 days",
     period: 10080,
-    work: [],
+    work: [
+      {
+        name: "72 hours work time",
+        maximumWorkTime: 72,
+        breaches: [
+          {
+            level: "nobreach",
+            from: 4321,
+            to: 4328,
+          },
+          {
+            level: "breach",
+            from: 4329,
+            to: 4335,
+          },
+          {
+            level: "minor",
+            from: 4336,
+            to: 4410,
+          },
+          {
+            level: "substantial",
+            from: 4411,
+            to: 4470,
+          },
+          {
+            level: "severe",
+            from: 4471,
+            to: 4500,
+          },
+          {
+            level: "critical",
+            from: 4501,
+            to: 0,
+          },
+        ],
+      },
+    ],
     rest: [
       {
         name: "24 continuous hours stationary rest time",
@@ -195,7 +232,44 @@ var rulesets = [
   {
     name: "14 days",
     period: 20160,
-    work: [],
+    work: [
+      {
+        name: "144 hours work time",
+        maximumWorkTime: 144,
+        breaches: [
+          {
+            level: "nobreach",
+            from: 8641,
+            to: 8648,
+          },
+          {
+            level: "breach",
+            from: 8649,
+            to: 8655,
+          },
+          {
+            level: "minor",
+            from: 8656,
+            to: 8730,
+          },
+          {
+            level: "substantial",
+            from: 8731,
+            to: 8790,
+          },
+          {
+            level: "severe",
+            from: 8791,
+            to: 8820,
+          },
+          {
+            level: "critical",
+            from: 8821,
+            to: 0,
+          },
+        ],
+      },
+    ],
     rest: [
       {
         name: "2 night rest breaks",
@@ -258,4 +332,4 @@ var rulesets = [
     ],
   },
 ];
-module.exports = {rulesets}
+module.exports = { rulesets };
