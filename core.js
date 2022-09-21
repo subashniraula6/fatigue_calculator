@@ -17,15 +17,14 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
     let breaches = _calculateBreach(updatedChecklist);
     updatedChecklist = _changeLastEvent(updatedChecklist, event);
 
-    let removedChecklist = _findRemovedChecklist(updatedChecklist);
+    // Add new checklist
+    let newChecklist = _addChecklistItems(event, updatedChecklist);
+    updatedChecklist.push(...newChecklist);
+
     updatedChecklist = _cleanupChecklist(updatedChecklist);
 
     checklist.length = 0;
     checklist.push(...updatedChecklist);
-
-    // Add new checklist
-    let newChecklist = _addChecklistItems(event, removedChecklist);
-    checklist.push(...newChecklist);
     console.log("Checklist after addition", checklist);
 
     return { checklist: { ...updatedChecklist, ...newChecklist }, breaches };
@@ -108,12 +107,6 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
     });
   }
 
-  function _findRemovedChecklist(checklist) {
-    return checklist.filter((updatedItem) => {
-      return updatedItem.totalPeriod / 60 >= updatedItem.periodType;
-    });
-  }
-
   function _cleanupChecklist(checklist) {
     return checklist.filter((updatedItem) => {
       return updatedItem.totalPeriod / 60 < updatedItem.periodType;
@@ -145,7 +138,7 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
     };
   }
 
-  function _addChecklistItems(event, removedChecklist = []) {
+  function _addChecklistItems(event, updatedChecklist) {
     let newChecklist = [];
     if (event["eventType"] === "work") {
       console.log("ADDING - CHECKLIST ITEMS");
@@ -156,20 +149,112 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
         if (rule["period"] / 60 <= 11) {
           newChecklist.push(checklistItem);
         } else if (rule["period"] / 60 > 11) {
+          // intitial add
           if (!__checklistItemWithPeriodExists(checklistItem["periodType"])) {
-            // Check if checklist removed is of this rule
-            let removedChecklistItem = removedChecklist.find(
-              (checklistItem) => checklistItem["periodType"] === rule["period"]
-            );
-            if (
-              removedChecklistItem &&
-              removedChecklistItem.breaches.length > 0
-            ) {
-              // If breache occured find successive event and create checklist of that event
-              let successiveEvent = ___calculateSuccessiveEvent(checklistItem);
-              checklistItem = __createChecklistItem(successiveEvent, rule);
-            }
             newChecklist.push(checklistItem);
+          } else {
+            // Check if last relevant break has occured
+            let hasOccured = __checkLastRelevantBreak(updatedChecklist, rule);
+            function __checkLastRelevantBreak(checklist, rule) {
+              console.log("Checking last relevant work");
+              let checklistItem = checklist.find((checklistItem) => {
+                return (
+                  checklistItem["breaks"]["continuousBreaks"].findIndex(
+                    (contdbrk) => {
+                      let isExists = false;
+                      contdbrk["endTimes"].forEach((item) => {
+                        let requiredContinuousBreak = rule["rest"][0][
+                          "continuousBreak"
+                        ]
+                          ? rule["rest"][0]["continuousBreak"] * 60
+                          : 7 * 60;
+                        if (
+                          item.isSame(event["startTime"]) &&
+                          checklistItem["periodType"] === rule["period"] / 60 &&
+                          contdbrk["continuousMinutes"] >=
+                            requiredContinuousBreak
+                        ) {
+                          isExists = true;
+                        }
+                      });
+                      return isExists;
+                    }
+                  ) !== -1
+                );
+              });
+              if (checklistItem) {
+                console.log(
+                  "RELEVANT REST OCCURED FOR PERIOD " +
+                    checklistItem["periodType"] +
+                    " and start time " +
+                    checklistItem["periodStart"].format("YYYY-MM-DD HH:mm")
+                );
+                return true;
+              } else return false;
+            }
+            if (hasOccured) {
+              console.log("ADDING CHECKLIST AFTER RELEVANT MAX BREAK");
+              let newChecklistItem = __createChecklistItem(event, rule);
+              newChecklist.push(newChecklistItem, rule);
+            }
+
+            // // Check if checklistItem completed is of this rule
+            // let completedChecklist = updatedChecklist.filter((updatedItem) => {
+            //   return updatedItem.totalPeriod / 60 >= updatedItem.periodType;
+            // });
+            // console.log("Completed checklist", completedChecklist);
+            // console.log("Rule Period", rule["period"]);
+            // let completedChecklistItem = completedChecklist.find(
+            //   (checklistItem) =>
+            //     checklistItem["periodType"] === rule["period"] / 60
+            // );
+            // console.log("Completed checklist item", completedChecklistItem);
+            // if (
+            //   completedChecklistItem &&
+            //   completedChecklistItem.breaches.length > 0
+            // ) {
+            //   // If breach occured find successive event and create checklist of that event
+            //   let successiveEvent = ___calculateSuccessiveEvent(checklistItem);
+            //   console.log("successuve event", successiveEvent);
+            //   checklistItem = __createChecklistItem(successiveEvent, rule);
+            //   console.log("new cheklist item", checklistItem);
+            // } else if (
+            //   completedChecklistItem &&
+            //   completedChecklistItem.breaches.length == 0
+            // ) {
+            //   // Check if last relevant break has occured
+            //   // find current checklist rest time
+            //   console.log("Checking last relevant work");
+            //   let currentChecklistItem = updatedChecklist.find(
+            //     (checklistItem) => {
+            //       return (
+            //         checklistItem["breaks"]["continuousBreaks"].findIndex(
+            //           (contdbrk) => {
+            //             let isExists = false;
+            //             contdbrk["endTimes"].forEach((item) => {
+            //               if (
+            //                 item.isSame(event["startTime"]) &&
+            //                 checklistItem["periodType"] ===
+            //                   rule["period"] / 60 &&
+            //                 contdbrk["continuousMinutes"] >=
+            //                   rule["rest"][0]["continuousBreak"]
+            //               ) {
+            //                 isExists = true;
+            //               }
+            //             });
+            //             console.log(isExists);
+            //             return isExists;
+            //           }
+            //         ) !== -1
+            //       );
+            //     }
+            //   );
+            //   if (currentChecklistItem) {
+            //     let newChecklistItem = __createChecklistItem(event, rule);
+            //     console.log("ADDING CHECKLIST AFTER RELEVANT MAX BREAK");
+            //     newChecklist.push(newChecklistItem, rule);
+            //   }
+            // }
           }
         }
       });
@@ -186,6 +271,7 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
   }
 
   function ___calculateSuccessiveEvent(checklistItem) {
+    console.log("Calculate successive event");
     let eventList = Array.isArray(events) ? events : ewd;
     let sortedEventList = eventList.sort(function (left, right) {
       return moment.utc(left.startTime).diff(moment.utc(right.startTime));

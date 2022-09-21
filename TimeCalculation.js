@@ -51,7 +51,7 @@ class TimeCalculation {
     } = this.checklistItem;
 
     let workDuration = 0;
-    if (lastEvent === "work" && newEventType === 'rest') {
+    if (lastEvent === "work" && newEventType === "rest") {
       if (totalPeriod >= periodType * 60) {
         // period exceeds
         workDuration = moment
@@ -85,7 +85,7 @@ class TimeCalculation {
     } = this.checklistItem;
 
     let restDuration = 0;
-    if (lastEvent === "rest" && newEventType === 'work') {
+    if (lastEvent === "rest" && newEventType === "work") {
       // 1. Total rest
       if (totalPeriod > periodType * 60) {
         // period exceeds
@@ -119,6 +119,7 @@ class TimeCalculation {
         this.checklistItem["breaks"]["continuousBreaks"].push({
           continuousMinutes: roundedDuration,
           count: 1,
+          endTimes: [newEventStartTime],
         });
       } else {
         var existingBreak =
@@ -127,6 +128,12 @@ class TimeCalculation {
         this.checklistItem["breaks"]["continuousBreaks"][existingBreakIndex] = {
           ...existingBreak,
           count: existingBreak.count + 1,
+          endTimes: [
+            ...this.checklistItem["breaks"]["continuousBreaks"][
+              existingBreakIndex
+            ]["endTimes"],
+            newEventStartTime,
+          ],
         };
       }
     }
