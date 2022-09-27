@@ -129,6 +129,9 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
       maxMinutes: rule["work"].length
         ? rule["work"][0]["maximumWorkTime"] * 60
         : null,
+      maxMinutesTime: toUtc(event["startTime"]).add({
+        minutes: rule["work"][0]["maximumWorkTime"] * 60,
+      }),
       periodTime: toUtc(event["startTime"]).add({
         minutes: rule["period"],
       }),

@@ -74,6 +74,13 @@ class TimeCalculation {
   }
 
   _calculateRestTime() {
+    this.__calculateContinuousRestTimes();
+    this.__calculateNightRestTimes();
+
+    return this.checklistItem;
+  }
+
+  __calculateContinuousRestTimes() {
     let { startTime: newEventStartTime, eventType: newEventType } = this.event;
     let {
       totalRest,
@@ -86,7 +93,6 @@ class TimeCalculation {
 
     let restDuration = 0;
     if (lastEvent === "rest" && newEventType === "work") {
-      // 1. Total rest
       if (totalPeriod > periodType * 60) {
         // period exceeds
         restDuration = moment
@@ -137,8 +143,71 @@ class TimeCalculation {
         };
       }
     }
+  }
 
-    return this.checklistItem;
+  __calculateNightRestTimes() {
+    let { startTime: newEventStartTime, eventType: newEventType } = this.event;
+    let {
+      totalRest,
+      totalPeriod,
+      lastEvent,
+      lastEventTime,
+      periodType,
+      periodTime,
+    } = this.checklistItem;
+
+    let restDuration = 0;
+    if (lastEvent === "rest" && newEventType === "work") {
+      if (totalPeriod > periodType * 60) {
+        // period exceeds
+        restDuration = moment
+          .duration(periodTime.diff(lastEventTime))
+          .asMinutes();
+      } else {
+        // period doesnt exceed
+        restDuration = moment
+          .duration(newEventStartTime.diff(lastEventTime))
+          .asMinutes();
+      }
+
+      totalRest += restDuration;
+
+      // set total rest
+      this.checklistItem["totalRest"] = totalRest;
+
+      // 1. Continuous Break
+      //Check for continuous break
+      var roundedDuration = this.__roundNearest15(restDuration, lastEvent);
+
+      var existingBreakIndex = this.checklistItem["breaks"][
+        "continuousBreaks"
+      ].findIndex(
+        (contBreak) => contBreak["continuousMinutes"] === roundedDuration
+      );
+
+      if (existingBreakIndex === -1) {
+        // push to countinuous breaks
+        this.checklistItem["breaks"]["continuousBreaks"].push({
+          continuousMinutes: roundedDuration,
+          count: 1,
+          endTimes: [newEventStartTime],
+        });
+      } else {
+        var existingBreak =
+          this.checklistItem["breaks"]["continuousBreaks"][existingBreakIndex];
+        // increase count
+        this.checklistItem["breaks"]["continuousBreaks"][existingBreakIndex] = {
+          ...existingBreak,
+          count: existingBreak.count + 1,
+          endTimes: [
+            ...this.checklistItem["breaks"]["continuousBreaks"][
+              existingBreakIndex
+            ]["endTimes"],
+            newEventStartTime,
+          ],
+        };
+      }
+    }
   }
 }
 
