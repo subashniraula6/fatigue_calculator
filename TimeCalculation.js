@@ -39,6 +39,64 @@ class TimeCalculation {
     return this.checklistItem;
   }
 
+  __calculateNightDuration(lastEventTime, newEventStartTime) {
+    let nightBreaks = [];
+    let morningStart = lastEventTime.clone().set({ h: 0, m: 0, s: 0 });
+    let morningEnd = lastEventTime.clone().set({ h: 8, m: 0, s: 0 });
+
+    if (lastEventTime.isBetween(morningStart, morningEnd, null, [])) {
+      let start = lastEventTime;
+      let end = newEventStartTime.isAfter(morningEnd)
+        ? morningEnd
+        : newEventStartTime;
+      let duration = end.diff(start, "minutes");
+      let roundedDuration = this.__roundNearest15(
+        duration,
+        this.checklistItem.lastEvent
+      );
+      if (roundedDuration >= 7 * 60) {
+        // push to nightbreaks
+        nightBreaks.push({
+          continuousMinutes: duration,
+          count: 1,
+          endTimes: [newEventStartTime],
+        });
+      }
+    }
+
+    let duration;
+    do {
+      let nightStart = lastEventTime.clone().set({ h: 22, m: 0, s: 0 });
+      let nightEnd = lastEventTime
+        .clone()
+        .add(1, "days")
+        .clone()
+        .set({ h: 8, m: 0, s: 0 });
+
+      let start = lastEventTime.isBefore(nightStart)
+        ? nightStart
+        : lastEventTime;
+
+      let end = newEventStartTime.isBefore(nightStart)
+        ? nightStart
+        : newEventStartTime;
+      end = newEventStartTime.isAfter(nightEnd) ? nightEnd : end;
+
+      duration = end.diff(start, "minutes");
+      if (duration > 0) {
+        // add duration to checklist
+        nightBreaks.push({
+          continuousMinutes: duration,
+          count: 1,
+          endTimes: [newEventStartTime],
+        });
+        lastEventTime = nightEnd.clone().set({ h: 22, m: 0, s: 0 });
+      }
+      if (duration === 0) break;
+    } while (lastEventTime.isBefore(newEventStartTime));
+    return nightBreaks;
+  }
+
   _calculateWorkTime() {
     let { startTime: newEventStartTime, eventType: newEventType } = this.event;
     let {
@@ -110,103 +168,74 @@ class TimeCalculation {
       // set total rest
       this.checklistItem["totalRest"] = totalRest;
 
-      // 1. Continuous Break
-      //Check for continuous break
       var roundedDuration = this.__roundNearest15(restDuration, lastEvent);
-
-      var existingBreakIndex = this.checklistItem["breaks"][
-        "continuousBreaks"
-      ].findIndex(
-        (contBreak) => contBreak["continuousMinutes"] === roundedDuration
-      );
-
-      if (existingBreakIndex === -1) {
-        // push to countinuous breaks
-        this.checklistItem["breaks"]["continuousBreaks"].push({
-          continuousMinutes: roundedDuration,
-          count: 1,
-          endTimes: [newEventStartTime],
-        });
-      } else {
-        var existingBreak =
-          this.checklistItem["breaks"]["continuousBreaks"][existingBreakIndex];
-        // increase count
-        this.checklistItem["breaks"]["continuousBreaks"][existingBreakIndex] = {
-          ...existingBreak,
-          count: existingBreak.count + 1,
-          endTimes: [
-            ...this.checklistItem["breaks"]["continuousBreaks"][
-              existingBreakIndex
-            ]["endTimes"],
-            newEventStartTime,
-          ],
-        };
-      }
+      this.__addBreaksToChecklist(roundedDuration, "continuousBreaks");
     }
   }
 
   __calculateNightRestTimes() {
     let { startTime: newEventStartTime, eventType: newEventType } = this.event;
-    let {
-      totalRest,
-      totalPeriod,
-      lastEvent,
-      lastEventTime,
-      periodType,
-      periodTime,
-    } = this.checklistItem;
+    let { totalPeriod, lastEvent, lastEventTime, periodType, periodTime } =
+      this.checklistItem;
 
-    let restDuration = 0;
     if (lastEvent === "rest" && newEventType === "work") {
       if (totalPeriod > periodType * 60) {
         // period exceeds
-        restDuration = moment
-          .duration(periodTime.diff(lastEventTime))
-          .asMinutes();
-      } else {
-        // period doesnt exceed
-        restDuration = moment
-          .duration(newEventStartTime.diff(lastEventTime))
-          .asMinutes();
-      }
-
-      totalRest += restDuration;
-
-      // set total rest
-      this.checklistItem["totalRest"] = totalRest;
-
-      // 1. Continuous Break
-      //Check for continuous break
-      var roundedDuration = this.__roundNearest15(restDuration, lastEvent);
-
-      var existingBreakIndex = this.checklistItem["breaks"][
-        "continuousBreaks"
-      ].findIndex(
-        (contBreak) => contBreak["continuousMinutes"] === roundedDuration
-      );
-
-      if (existingBreakIndex === -1) {
-        // push to countinuous breaks
-        this.checklistItem["breaks"]["continuousBreaks"].push({
-          continuousMinutes: roundedDuration,
-          count: 1,
-          endTimes: [newEventStartTime],
+        let nightBreaks = this.__calculateNightDuration(
+          lastEventTime,
+          periodTime
+        );
+        nightBreaks.forEach((brk) => {
+          let roundedDuration = this.__roundNearest15(
+            brk["continuousMinutes"],
+            lastEvent
+          );
+          this.__addBreaksToChecklist(roundedDuration, "nightBreaks");
         });
       } else {
-        var existingBreak =
-          this.checklistItem["breaks"]["continuousBreaks"][existingBreakIndex];
-        // increase count
-        this.checklistItem["breaks"]["continuousBreaks"][existingBreakIndex] = {
-          ...existingBreak,
-          count: existingBreak.count + 1,
-          endTimes: [
-            ...this.checklistItem["breaks"]["continuousBreaks"][
-              existingBreakIndex
-            ]["endTimes"],
-            newEventStartTime,
-          ],
-        };
+        // period doesnt exceed
+        let nightBreaks = this.__calculateNightDuration(
+          lastEventTime,
+          newEventStartTime
+        );
+        nightBreaks.forEach((brk) => {
+          let roundedDuration = this.__roundNearest15(
+            brk["continuousMinutes"],
+            lastEvent
+          );
+          this.__addBreaksToChecklist(roundedDuration, "nightBreaks");
+        });
       }
+    }
+  }
+
+  __addBreaksToChecklist(duration, restType) {
+    let { startTime: newEventStartTime } = this.event;
+    var existingBreakIndex = this.checklistItem["breaks"][restType].findIndex(
+      (contBreak) => contBreak["continuousMinutes"] === duration
+    );
+
+    if (existingBreakIndex === -1) {
+      // push to countinuous breaks
+      this.checklistItem["breaks"][restType].push({
+        continuousMinutes: duration,
+        count: 1,
+        endTimes: [newEventStartTime],
+      });
+    } else {
+      var existingBreak =
+        this.checklistItem["breaks"][restType][existingBreakIndex];
+      // increase count
+      this.checklistItem["breaks"][restType][existingBreakIndex] = {
+        ...existingBreak,
+        count: existingBreak.count + 1,
+        endTimes: [
+          ...this.checklistItem["breaks"][restType][existingBreakIndex][
+            "endTimes"
+          ],
+          newEventStartTime,
+        ],
+      };
     }
   }
 }

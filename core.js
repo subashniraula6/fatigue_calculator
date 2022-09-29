@@ -173,48 +173,99 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
             newChecklist.push(checklistItem);
           } else {
             // Check if last relevant break has occured
-            let hasOccured = __checkLastRelevantBreak(updatedChecklist, rule);
-            function __checkLastRelevantBreak(checklist, rule) {
-              console.log("Checking last relevant work");
-              let checklistItem = checklist.find((checklistItem) => {
-                return (
-                  checklistItem["breaks"]["continuousBreaks"].findIndex(
-                    (contdbrk) => {
-                      let isExists = false;
-                      contdbrk["endTimes"].forEach((item) => {
-                        let requiredContinuousBreak = rule["rest"][0][
-                          "continuousBreak"
-                        ]
-                          ? rule["rest"][0]["continuousBreak"] * 60
-                          : 7 * 60;
-                        if (
-                          item.isSame(event["startTime"]) &&
-                          checklistItem["periodType"] === rule["period"] / 60 &&
-                          contdbrk["continuousMinutes"] >=
-                            requiredContinuousBreak
-                        ) {
-                          isExists = true;
-                        }
-                      });
-                      return isExists;
-                    }
-                  ) !== -1
-                );
-              });
-              if (checklistItem) {
-                console.log(
-                  "RELEVANT REST OCCURED FOR PERIOD " +
-                    checklistItem["periodType"] +
-                    " and start time " +
-                    checklistItem["periodStart"].format("YYYY-MM-DD HH:mm")
-                );
-                return true;
-              } else return false;
+            let isContinuousBreakRequired = rule["rest"][0]["continuousBreak"]
+              ? true
+              : false;
+            let isNightBreakRequired = rule["rest"][0]["nightBreaks"]
+              ? true
+              : false;
+
+            let isContinuousBreakOccured = false;
+            if (isContinuousBreakRequired) {
+              isContinuousBreakOccured = ___checkLastRelevantContinuousBreak(
+                updatedChecklist,
+                rule
+              );
+              function ___checkLastRelevantContinuousBreak(checklist, rule) {
+                console.log("Checking last relevant continuous rest");
+                let checklistItem = checklist.find((checklistItem) => {
+                  return (
+                    checklistItem["breaks"]["continuousBreaks"].findIndex(
+                      (contdbrk) => {
+                        let isExists = false;
+                        contdbrk["endTimes"].forEach((item) => {
+                          if (
+                            item.isSame(event["startTime"]) &&
+                            checklistItem["periodType"] ===
+                              rule["period"] / 60 &&
+                            contdbrk["continuousMinutes"] >=
+                              rule["rest"][0]["continuousBreak"] * 60
+                          ) {
+                            isExists = true;
+                          }
+                        });
+                        return isExists;
+                      }
+                    ) !== -1
+                  );
+                });
+                if (checklistItem) {
+                  console.log(
+                    "RELEVANT CONTINUOUS REST OCCURED FOR PERIOD " +
+                      checklistItem["periodType"] +
+                      " and start time " +
+                      checklistItem["periodStart"].format("YYYY-MM-DD HH:mm")
+                  );
+                  return true;
+                } else return false;
+              }
             }
-            if (hasOccured) {
+
+            let isNightBreakOccured = false;
+            if (isNightBreakRequired) {
+              isNightBreakOccured = ___checkLastRelevantNightBreak(
+                updatedChecklist,
+                rule
+              );
+              function ___checkLastRelevantNightBreak(checklist, rule) {
+                console.log("Checking last relevant night rest");
+                let checklistItem = checklist.find((checklistItem) => {
+                  return (
+                    checklistItem["breaks"]["nightBreaks"].findIndex(
+                      (nightBrk) => {
+                        let isExists = false;
+                        nightBrk["endTimes"].forEach((item) => {
+                          let requiredNightBreak = 7 * 60;
+                          if (
+                            item.isSame(event["startTime"]) &&
+                            checklistItem["periodType"] ===
+                              rule["period"] / 60 &&
+                            nightBrk["continuousMinutes"] >= requiredNightBreak
+                          ) {
+                            isExists = true;
+                          }
+                        });
+                        return isExists;
+                      }
+                    ) !== -1
+                  );
+                });
+                if (checklistItem) {
+                  console.log(
+                    "RELEVANT NIGHT REST OCCURED FOR PERIOD " +
+                      checklistItem["periodType"] +
+                      " and start time " +
+                      checklistItem["periodStart"].format("YYYY-MM-DD HH:mm")
+                  );
+                  return true;
+                } else return false;
+              }
+            }
+
+            if (isContinuousBreakOccured || isNightBreakOccured) {
               console.log("ADDING CHECKLIST AFTER RELEVANT MAX BREAK");
               let newChecklistItem = __createChecklistItem(event, rule);
-              newChecklist.push(newChecklistItem, rule);
+              newChecklist.push(newChecklistItem);
             }
 
             // // Check if checklistItem completed is of this rule

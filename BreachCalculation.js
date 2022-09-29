@@ -100,7 +100,7 @@ class BreachCalculation {
       );
       let extremeBreach = sortedBreaches[0];
       selectedBreach =
-        extremeBreach["from"] <= totalWork ? extremeBreach[0] : null;
+        extremeBreach["from"] <= totalWork ? extremeBreach : null;
     }
     // update breach to checklist item
     let description = null;
