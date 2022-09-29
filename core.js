@@ -19,15 +19,15 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
 
     // Add new checklist
     let newChecklist = _addChecklistItems(event, updatedChecklist);
-    updatedChecklist.push(...newChecklist);
 
     updatedChecklist = _cleanupChecklist(updatedChecklist);
 
-    checklist.length = 0;
-    checklist.push(...updatedChecklist);
-    console.log("Checklist after addition", checklist);
+    console.log("Checklist after addition", [
+      ...updatedChecklist,
+      ...newChecklist,
+    ]);
 
-    return { checklist: { ...updatedChecklist, ...newChecklist }, breaches };
+    return { checklist: [...updatedChecklist, ...newChecklist], breaches };
   }
 
   // Convert to utc datetime
@@ -114,6 +114,17 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
   }
 
   function __createChecklistItem(event, rule) {
+    let minimumRestTime = null;
+    if (rule["rest"].length > 0) {
+      let rests = rule["rest"];
+      if (rests.length > 0) {
+        let sortedRests = rests[0]["breaches"].sort(
+          (left, right) => left.from - right.from
+        );
+        minimumRestTime = sortedRests[0]["to"];
+      }
+    }
+
     return {
       periodType: rule["period"] / 60,
       periodStart: toUtc(event["startTime"]),
@@ -132,6 +143,11 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
       maxMinutesTime: toUtc(event["startTime"]).add({
         minutes: rule["work"][0]["maximumWorkTime"] * 60,
       }),
+      restTime: minimumRestTime
+        ? toUtc(event["startTime"]).add({
+            minutes: minimumRestTime,
+          })
+        : null,
       periodTime: toUtc(event["startTime"]).add({
         minutes: rule["period"],
       }),
@@ -297,7 +313,12 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
   if (Array.isArray(events)) {
     let breachList = [];
     events.forEach((event) => {
-      const { breaches } = _handleEvent(event);
+      const { breaches, checklist: updatedChecklist } = _handleEvent(event);
+
+      // change checklist to updatedChecklist
+      checklist.length = 0;
+      checklist.push(...updatedChecklist);
+
       breachList.push(...breaches);
     });
     return { checklist, breaches: breachList };
