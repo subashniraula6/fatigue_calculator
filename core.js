@@ -10,17 +10,20 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
     console.log("NEW EVENT", event);
     console.log("=================================================");
 
-    //Update checklist
+    // Update checklist
     let updatedChecklist = _updateCurrentChecklist(event, checklist);
 
-    // Calculate breach and others
+    // Calculate breach
     let breaches = _calculateBreach(updatedChecklist);
-    updatedChecklist = _changeLastEvent(updatedChecklist, event);
-
+    
     // Add new checklist
     let newChecklist = _addChecklistItems(event, updatedChecklist);
-
+    
+    // Cleanup checklist
     updatedChecklist = _cleanupChecklist(updatedChecklist);
+
+    // Change last event
+    updatedChecklist = _changeLastEvent(updatedChecklist, event);
 
     console.log("Checklist after addition", [
       ...updatedChecklist,
@@ -237,7 +240,7 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
                         nightBrk["endTimes"].forEach((item) => {
                           let requiredNightBreak = 7 * 60;
                           if (
-                            item.isSame(event["startTime"]) &&
+                            item.isBetween(checklistItem['lastEventTime'], event["startTime"], null, []) &&
                             checklistItem["periodType"] ===
                               rule["period"] / 60 &&
                             nightBrk["continuousMinutes"] >= requiredNightBreak

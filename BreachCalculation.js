@@ -12,12 +12,10 @@ class BreachCalculation {
   ) {
     let ruleEquivalentContinuousBreakCount = 0;
     checklistContinuousBreaks.forEach((contdBrk) => {
-      if (contdBrk["continuousMinutes"] > ruleContinuousBreak) {
+      if (contdBrk["continuousMinutes"] >= ruleContinuousBreak) {
         ruleEquivalentContinuousBreakCount +=
           parseInt(contdBrk["continuousMinutes"] / ruleContinuousBreak) *
           contdBrk["count"];
-      } else if (contdBrk["continuousMinutes"] === ruleContinuousBreak) {
-        ruleEquivalentContinuousBreakCount += contdBrk["count"];
       }
     });
     return ruleEquivalentContinuousBreakCount;
@@ -25,7 +23,8 @@ class BreachCalculation {
 
   ___categorizecontinuousStationaryBreakBreach(
     totalRestBreakMinutes,
-    restBreakRule
+    restBreakRule,
+    type
   ) {
     let breachList = restBreakRule["breaches"];
     var selectedBreach = breachList.find((item) => {
@@ -35,18 +34,17 @@ class BreachCalculation {
         totalRestBreakMinutes >= from * 60 && totalRestBreakMinutes <= to * 60
       );
     });
-    console.log("totalRestBreakMinutes", totalRestBreakMinutes);
-    console.log("Breachlist", breachList);
-    console.log(selectedBreach);
     let from = selectedBreach["from"];
     let to = selectedBreach["to"];
-    let description = `Rest less than ${minutesToHourMinutes(to * 60)}`;
+    let description = `${
+      type === "nightBreak" ? "Night" : "Continuous"
+    } Rest less than ${minutesToHourMinutes(to * 60)}`;
     if (from !== 0) {
       description += ` and greater than ${minutesToHourMinutes(from * 60)}`;
     }
     return {
       level: selectedBreach["level"],
-      type: "continuousStationaryBreakBreach",
+      type,
       description,
     };
   }
@@ -162,7 +160,8 @@ class BreachCalculation {
           console.log("CATEGORIZING REST BREACHES......");
           let breach = this.___categorizecontinuousStationaryBreakBreach(
             maxRestTime,
-            restBreakRule
+            restBreakRule,
+            "continuousBreak"
           );
           console.log("REST BREACH CALCULATED: ", breach);
           continuousMinutesBreaches.push({
@@ -175,21 +174,79 @@ class BreachCalculation {
     return continuousMinutesBreaches;
   }
 
-  // __calculateNightRestBreaches() {
-  //   let nightRestBreaches = [];
-  //   let { periodType } = this.checklistItem;
-  //   // fetch rule for the period
-  //   var rule = this.ruleSets.find((rule) => rule["period"] / 60 === periodType);
-  //   var restBreakRules = rule["rest"];
+  __calculateNightRestBreaches() {
+    let nightRestBreaches = [];
+    let { periodType, breaks } = this.checklistItem;
+    let { nightBreaks } = breaks;
+    // fetch rule for the period
+    var rule = this.ruleSets.find((rule) => rule["period"] / 60 === periodType);
+    var restBreakRules = rule["rest"];
 
-  //   restBreakRules.forEach((restBreakRule) => {
-  //     console.log("NIGHT REST BREAK MINUTES CALCULATION ");
-  //     if (restBreakRule["nightBreaks"]) {
-  //       let requiredNumberOfBreaks = restBreakRule["nightBreaks"];
+    restBreakRules.forEach((restBreakRule) => {
+      console.log("NIGHT REST BREAK MINUTES CALCULATION ");
+      if (restBreakRule["nightBreaks"]) {
+        let requiredNumberOfBreaks = restBreakRule["nightBreaks"];
 
-  //     }
-  //   });
-  // }
+        let validNightBreaks = nightBreaks.filter(
+          (brk) => brk["continuousMinutes"] >= 7 * 60
+        );
+
+        console.log("night breaks", JSON.stringify(nightBreaks));
+
+        if (validNightBreaks.length < requiredNumberOfBreaks) {
+          // breach occured
+          // find the longest night rest break
+          let invalidNightBreaks = nightBreaks.filter(
+            (brk) => brk["continuousMinutes"] < 7 * 60
+          );
+
+          var maxRestTime = invalidNightBreaks.sort(
+            (left, right) =>
+              right["continuousMinutes"] - left["continuousMinutes"]
+          )[0]["continuousMinutes"];
+
+          let breach = this.___categorizecontinuousStationaryBreakBreach(
+            maxRestTime,
+            restBreakRule,
+            "nightBreak"
+          );
+          console.log("NIGHT REST BREACH CALCULATED: ", breach);
+          nightRestBreaches.push({
+            ...this.checklistItem,
+            breaches: [...this.checklistItem.breaches, breach],
+          });
+        }
+      }
+    });
+    return nightRestBreaches;
+  }
+
+  __calculateConsecutiveNightRestBreaches() {
+    let consecutiveNightBreaches = [];
+    let { periodType, breaks } = this.checklistItem;
+    let { consecutiveNightBreaks } = breaks;
+    // fetch rule for the period
+    var rule = this.ruleSets.find((rule) => rule["period"] / 60 === periodType);
+    var restBreakRules = rule["rest"];
+
+    restBreakRules.forEach((restBreakRule) => {
+      console.log("CONSECUTIVE NIGHT REST BREAK MINUTES CALCULATION ");
+      if (restBreakRule["consecutiveNightBreaks"] > 0) {
+        if (consecutiveNightBreaks < restBreakRule["consecutiveNightBreaks"]) {
+          // breach occured
+          let breach = {
+            type: "consecutive night breaks",
+          };
+          console.log("CONSECUTIVE NIGHT REST BREACH CALCULATED: ", breach);
+          consecutiveNightBreaches.push({
+            ...this.checklistItem,
+            breaches: [...this.checklistItem.breaches, breach],
+          });
+        }
+      }
+    });
+    return consecutiveNightBreaches;
+  }
 
   _calculateRestBreach() {
     let restBreaches = [];
@@ -209,9 +266,14 @@ class BreachCalculation {
     let continuousMinutesBreaches = this.__calculateContinuousMinutesBreach();
     restBreaches.push(...continuousMinutesBreaches);
 
-    // // Calculate night rest breaches
-    // let nightRestBreaches = this.__calculateNightRestBreaches();
-    // restBreaches.push(...nightRestBreaches);
+    // Calculate night rest breaches
+    let nightRestBreaches = this.__calculateNightRestBreaches();
+    restBreaches.push(...nightRestBreaches);
+
+    // Calculate Consecutive night breaks breaches
+    let consecutiveNightBreaches =
+      this.__calculateConsecutiveNightRestBreaches();
+    restBreaches.push(...consecutiveNightBreaches);
 
     return restBreaches;
   }
