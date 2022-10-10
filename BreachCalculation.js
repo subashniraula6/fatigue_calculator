@@ -12,12 +12,10 @@ class BreachCalculation {
   ) {
     let ruleEquivalentContinuousBreakCount = 0;
     checklistContinuousBreaks.forEach((contdBrk) => {
-      if (contdBrk["continuousMinutes"] > ruleContinuousBreak) {
+      if (contdBrk["continuousMinutes"] >= ruleContinuousBreak) {
         ruleEquivalentContinuousBreakCount +=
           parseInt(contdBrk["continuousMinutes"] / ruleContinuousBreak) *
           contdBrk["count"];
-      } else if (contdBrk["continuousMinutes"] === ruleContinuousBreak) {
-        ruleEquivalentContinuousBreakCount += contdBrk["count"];
       }
     });
     return ruleEquivalentContinuousBreakCount;
@@ -35,9 +33,6 @@ class BreachCalculation {
         totalRestBreakMinutes >= from * 60 && totalRestBreakMinutes <= to * 60
       );
     });
-    console.log("totalRestBreakMinutes", totalRestBreakMinutes);
-    console.log("Breachlist", breachList);
-    console.log(selectedBreach);
     let from = selectedBreach["from"];
     let to = selectedBreach["to"];
     let description = `Rest less than ${minutesToHourMinutes(to * 60)}`;

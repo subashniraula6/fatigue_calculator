@@ -101,64 +101,97 @@ const moment = require("moment");
 // console.log("currentChecklistItem", currentChecklistItem);
 
 ///////////////////////////////////////////////////////////////
-function __calculateNightDuration(lastEventTime, newEventStartTime) {
-  let nightBreaks = [];
-  let morningStart = lastEventTime.clone().set({ h: 0, m: 0, s: 0 });
-  let morningEnd = lastEventTime.clone().set({ h: 8, m: 0, s: 0 });
+// function __calculateNightDuration(lastEventTime, newEventStartTime) {
+//   let nightBreaks = [];
+//   let morningStart = lastEventTime.clone().set({ h: 0, m: 0, s: 0 });
+//   let morningEnd = lastEventTime.clone().set({ h: 8, m: 0, s: 0 });
 
-  if (lastEventTime.isBetween(morningStart, morningEnd, null, [])) {
-    let start = lastEventTime;
-    let end = newEventStartTime.isAfter(morningEnd)
-      ? morningEnd
-      : newEventStartTime;
-    let duration = end.diff(start, "minutes");
-    // push to nightbreaks
-    nightBreaks.push({
-      continuousMinutes: duration,
-      hour: duration / 60,
-      start,
-      end,
-    });
-  }
+//   if (lastEventTime.isBetween(morningStart, morningEnd, null, [])) {
+//     let start = lastEventTime;
+//     let end = newEventStartTime.isAfter(morningEnd)
+//       ? morningEnd
+//       : newEventStartTime;
+//     let duration = end.diff(start, "minutes");
+//     // push to nightbreaks
+//     nightBreaks.push({
+//       continuousMinutes: duration,
+//       hour: duration / 60,
+//       start,
+//       end,
+//     });
+//   }
 
-  do {
-    let nightStart = lastEventTime.clone().set({ h: 22, m: 0, s: 0 });
-    let nightEnd = lastEventTime
-      .clone()
-      .add(1, "days")
-      .clone()
-      .set({ h: 08, m: 0, s: 0 });
+//   do {
+//     let nightStart = lastEventTime.clone().set({ h: 22, m: 0, s: 0 });
+//     let nightEnd = lastEventTime
+//       .clone()
+//       .add(1, "days")
+//       .clone()
+//       .set({ h: 08, m: 0, s: 0 });
 
-    let start = lastEventTime.isBefore(nightStart) ? nightStart : lastEventTime;
+//     let start = lastEventTime.isBefore(nightStart) ? nightStart : lastEventTime;
 
-    let end = newEventStartTime.isBefore(nightStart)
-      ? nightStart
-      : newEventStartTime;
-    end = newEventStartTime.isAfter(nightEnd) ? nightEnd : end;
+//     let end = newEventStartTime.isBefore(nightStart)
+//       ? nightStart
+//       : newEventStartTime;
+//     end = newEventStartTime.isAfter(nightEnd) ? nightEnd : end;
 
-    let duration = end.diff(start, "minutes");
-    if (duration > 0) {
-      // add duration to checklist
-      nightBreaks.push({
-        continuousMinutes: duration,
-        hour: duration / 60,
-        start,
-        end,
-      });
-      lastEventTime = nightEnd.clone().set({ h: 22, m: 0, s: 0 });
-    }
-    if (duration === 0) break;
-  } while (lastEventTime.isBefore(newEventStartTime));
-  return nightBreaks;
-}
+//     let duration = end.diff(start, "minutes");
+//     if (duration > 0) {
+//       // add duration to checklist
+//       nightBreaks.push({
+//         continuousMinutes: duration,
+//         endTimes: [end],
+//       });
+//       lastEventTime = nightEnd.clone().set({ h: 22, m: 0, s: 0 });
+//     }
+//     if (duration === 0) break;
+//   } while (lastEventTime.isBefore(newEventStartTime));
+//   return nightBreaks;
+// }
 
-let lastEventTime = new moment().set({ h: 9, m: 0, s: 0 });
-let newEventStartTime = lastEventTime
-  .clone()
-  .add(1, "days")
-  .set({ h: 23, m: 0, s: 0 });
+// let lastEventTime = new moment().set({ h: 23, m: 0, s: 0 });
+// let newEventStartTime = lastEventTime
+//   .clone()
+//   .add(5, "days")
+//   .set({ h: 10, m: 0, s: 0 });
 
-let nightBreaks = __calculateNightDuration(lastEventTime, newEventStartTime);
-console.log("start", lastEventTime);
-console.log("end", newEventStartTime);
-console.log("NightBreaks", nightBreaks);
+// let nightBreaks = __calculateNightDuration(lastEventTime, newEventStartTime);
+// console.log("start", lastEventTime);
+// console.log("end", newEventStartTime);
+// console.log("NightBreaks", nightBreaks);
+
+// const test = (arr) => {
+//   let sorted_arr = arr.sort((left, right) =>
+//     moment.utc(left).diff(moment.utc(right))
+//   );
+//   let result = [[sorted_arr[0]]];
+//   let j = 0;
+//   for (let i = 1; i < arr.length; i++) {
+//     var date = sorted_arr[i];
+//     var prev_date = sorted_arr[i - 1];
+
+//     if (date.diff(prev_date, 'days') > 1) {
+//       j++;
+//       result.push([date]);
+//     } else {
+//       result[j].push(date);
+//     }
+//   }
+//   return result;
+// };
+
+// const arr = [
+//   new moment(),
+//   new moment().add(1, "days"),
+//   new moment().add(2, "days"),
+//   new moment().add(4, "days"),
+//   new moment().add(5, "days"),
+// ];
+// let result = test(arr);
+// let maxCombinations = Math.max(
+//   ...result.map((combination) => combination.length)
+// );
+// console.log(result);
+// console.log(maxCombinations)
+let date = new moment();
