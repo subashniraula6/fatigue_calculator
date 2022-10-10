@@ -36,7 +36,9 @@ class BreachCalculation {
     });
     let from = selectedBreach["from"];
     let to = selectedBreach["to"];
-    let description = `${type === 'nightBreak' ? "Night": "Continuous"} Rest less than ${minutesToHourMinutes(to * 60)}`;
+    let description = `${
+      type === "nightBreak" ? "Night" : "Continuous"
+    } Rest less than ${minutesToHourMinutes(to * 60)}`;
     if (from !== 0) {
       description += ` and greater than ${minutesToHourMinutes(from * 60)}`;
     }
@@ -175,7 +177,7 @@ class BreachCalculation {
   __calculateNightRestBreaches() {
     let nightRestBreaches = [];
     let { periodType, breaks } = this.checklistItem;
-    let {nightBreaks} = breaks; 
+    let { nightBreaks } = breaks;
     // fetch rule for the period
     var rule = this.ruleSets.find((rule) => rule["period"] / 60 === periodType);
     var restBreakRules = rule["rest"];
@@ -189,7 +191,7 @@ class BreachCalculation {
           (brk) => brk["continuousMinutes"] >= 7 * 60
         );
 
-        console.log("night breaks", JSON.stringify(nightBreaks))
+        console.log("night breaks", JSON.stringify(nightBreaks));
 
         if (validNightBreaks.length < requiredNumberOfBreaks) {
           // breach occured
@@ -219,6 +221,33 @@ class BreachCalculation {
     return nightRestBreaches;
   }
 
+  __calculateConsecutiveNightRestBreaches() {
+    let consecutiveNightBreaches = [];
+    let { periodType, breaks } = this.checklistItem;
+    let { consecutiveNightBreaks } = breaks;
+    // fetch rule for the period
+    var rule = this.ruleSets.find((rule) => rule["period"] / 60 === periodType);
+    var restBreakRules = rule["rest"];
+
+    restBreakRules.forEach((restBreakRule) => {
+      console.log("CONSECUTIVE NIGHT REST BREAK MINUTES CALCULATION ");
+      if (restBreakRule["consecutiveNightBreaks"] > 0) {
+        if (consecutiveNightBreaks < restBreakRule["consecutiveNightBreaks"]) {
+          // breach occured
+          let breach = {
+            type: "consecutive night breaks",
+          };
+          console.log("CONSECUTIVE NIGHT REST BREACH CALCULATED: ", breach);
+          consecutiveNightBreaches.push({
+            ...this.checklistItem,
+            breaches: [...this.checklistItem.breaches, breach],
+          });
+        }
+      }
+    });
+    return consecutiveNightBreaches;
+  }
+
   _calculateRestBreach() {
     let restBreaches = [];
     console.log("CALCULATING REST BREACH....");
@@ -240,6 +269,11 @@ class BreachCalculation {
     // Calculate night rest breaches
     let nightRestBreaches = this.__calculateNightRestBreaches();
     restBreaches.push(...nightRestBreaches);
+
+    // Calculate Consecutive night breaks breaches
+    let consecutiveNightBreaches =
+      this.__calculateConsecutiveNightRestBreaches();
+    restBreaches.push(...consecutiveNightBreaches);
 
     return restBreaches;
   }
