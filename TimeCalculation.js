@@ -84,11 +84,6 @@ class TimeCalculation {
           endTime: new moment(end.format()),
         });
         lastEventTime = nightEnd.clone().set({ h: 22, m: 0, s: 0 });
-        // console.log("STARRRRRRRRRT1111", start)
-        // console.log("STARRRRRRRRRT", start.format())
-        // console.log("ENNNNNNNDDDDD11111", end)
-        // console.log("ENNNNNNNDDDDD", end.format())
-        // console.log("DURATION", duration)
       }
       if (duration === 0) break;
     } while (lastEventTime.isBefore(newEventStartTime));
