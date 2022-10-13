@@ -317,7 +317,7 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
   function _addChecklistItems(event, updatedChecklist) {
     let newChecklist = [];
     let noRelevantChecklists = __addIfNoRelevantRestBreak(updatedChecklist, event);
-    items.length > 0 &&
+    noRelevantChecklists.length > 0 &&
       console.log("CHECKLIST ADDED after 'No Relevant break' => ", noRelevantChecklists);
     newChecklist.push(...noRelevantChecklists);
 
