@@ -204,20 +204,25 @@ class TimeCalculation {
   }
 
   __calculateConsecutiveNightBreaks() {
-    let { nightBreaks } = this.checklistItem.breaks;
-    let validNightBreaks = nightBreaks.filter(
-      (brk) => brk["continuousMinutes"] >= 7 * 60
-    );
-    if (validNightBreaks.length >= 2) {
-      let breakEndTimes = [];
-      validNightBreaks.forEach((brk) => {
-        breakEndTimes.push(...brk.endTimes);
-      });
-      let combinations = this.__getConsecutiveDaysCombinations(breakEndTimes);
-      let maxCombinationsLength = Math.max(
-        ...combinations.map((combination) => combination.length)
+    let { eventType: newEventType } = this.event;
+    let { lastEvent } =
+      this.checklistItem;
+    if (lastEvent === "rest" && newEventType === "work") {
+      let { nightBreaks } = this.checklistItem.breaks;
+      let validNightBreaks = nightBreaks.filter(
+        (brk) => brk["continuousMinutes"] >= 7 * 60
       );
-      this.checklistItem["breaks"]["consecutiveNightBreaks"] = maxCombinationsLength;
+      if (validNightBreaks.length >= 2) {
+        let breakEndTimes = [];
+        validNightBreaks.forEach((brk) => {
+          breakEndTimes.push(...brk.endTimes);
+        });
+        let combinations = this.__getConsecutiveDaysCombinations(breakEndTimes);
+        let maxCombinationsLength = Math.max(
+          ...combinations.map((combination) => combination.length)
+        );
+        this.checklistItem["breaks"]["consecutiveNightBreaks"] = maxCombinationsLength;
+      }
     }
   }
 

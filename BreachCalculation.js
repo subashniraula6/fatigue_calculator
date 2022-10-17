@@ -249,19 +249,22 @@ class BreachCalculation {
   }
 
   _calculateRestBreach() {
-    let restBreaches = [];
-    console.log("CALCULATING REST BREACH....");
     let { totalPeriod, periodType, maxMinutes } = this.checklistItem;
-
+    
     // Check if totalPeriod exceeds RULE PERIOD
     if (totalPeriod < periodType * 60) {
       console.log(
-        `No rest breach calculation required => Since checklist totalPeriod(${totalPeriod}) < or maxMinutes(${maxMinutes})`
+        `No rest breach calculation required => Since checklist totalPeriod(${totalPeriod}) < PeriodType(${
+          periodType * 60
+        }) i.e. Period Doesnt exceed`
       );
-      return restBreaches;
+      return [];
       // TODO: estimation of rest hour breaches
     }
-
+    
+    console.log("CALCULATING REST BREACH....");
+    let restBreaches = [];
+    
     // Calculate Continuous Minutes
     let continuousMinutesBreaches = this.__calculateContinuousMinutesBreach();
     restBreaches.push(...continuousMinutesBreaches);

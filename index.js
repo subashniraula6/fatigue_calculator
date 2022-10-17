@@ -2,7 +2,7 @@ const BreachCalculator = require("./core")["BreachCalculator"];
 //RuleSets
 var ruleSets = require("./newRuleset")["rulesets"];
 //DataSets
-var dataSet = require("./EWD Test Data - Standard hours SOLO Driver Heavy Vehicle/8/001-08_00 Breach_Minor Work (greater than 7h45m).json");
+var dataSet = require("./EWD Test Data - Standard hours SOLO Driver Heavy Vehicle/14days/001-14days Breach_Compliant.json");
 
 let ewd = [];
 let result = BreachCalculator(dataSet["ewd"], ruleSets, [], ewd);
