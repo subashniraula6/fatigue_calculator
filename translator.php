@@ -53,6 +53,7 @@ function createRestBreachList($rule)
         $breaches['minimumTime'] = convert($break['restBreak']['minimumTime'], 'minutes') > 0 ?
             convert($break['restBreak']['minimumTime'], 'minutes') :
             false;
+            
         $breaches['continuousBreak'] = convert($break['restBreak']['continuousBreak'], 'minutes');
 
         if ($breaches['minimumTime'] === false) {
@@ -97,7 +98,7 @@ function createRestBreachList($rule)
                 }
             }
         }
-        $breaches['breaches'] = array_merge($breaches['breaches'], $continuousBreaches);
+        $breaches['breaches'] = $breaches['breaches'] + $continuousBreaches;
         array_push($breachList, $breaches);
     }
     return $breachList;

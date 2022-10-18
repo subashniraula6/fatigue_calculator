@@ -1,0 +1,338 @@
+{
+    "ruleSetName": "Standard Hours - SOLO Driver - Heavy Vehicle - updated version 1.0a",
+    "rules": [
+        {
+            "name": "5.5 hours",
+            "period": 330,
+            "work": [
+                {
+                    "name": "5.25 hours work time",
+                    "maximumWorkTime": 5.25,
+                    "breaches": [
+                        {
+                            "level": "noBreach",
+                            "from": 316,
+                            "to": 323
+                        }
+                    ]
+                }
+            ],
+            "rest": [
+                {
+                    "name": "15 minutes continuous rest time in 1 blocks",
+                    "minimumTime": false,
+                    "continuousBreak": 15,
+                    "numberOfContinuousBreaks": 1,
+                    "descriptionContainsAtLeast": false,
+                    "nightBreaks": false,
+                    "consecutiveNightBreaks": false,
+                    "breaches": []
+                }
+            ]
+        },
+        {
+            "name": "8 hours",
+            "period": 480,
+            "work": [
+                {
+                    "name": "7.5 hours work time",
+                    "maximumWorkTime": 7.5,
+                    "breaches": [
+                        {
+                            "level": "minor",
+                            "from": 466,
+                            "to": 0
+                        },
+                        {
+                            "level": "noBreach",
+                            "from": 451,
+                            "to": 458
+                        }
+                    ]
+                }
+            ],
+            "rest": [
+                {
+                    "name": "15 minutes continuous rest time in 2 blocks",
+                    "minimumTime": 30,
+                    "continuousBreak": 15,
+                    "numberOfContinuousBreaks": 2,
+                    "descriptionContainsAtLeast": true,
+                    "nightBreaks": false,
+                    "consecutiveNightBreaks": false,
+                    "breaches": []
+                }
+            ]
+        },
+        {
+            "name": "11 hours",
+            "period": 660,
+            "work": [
+                {
+                    "name": "10 hours work time",
+                    "maximumWorkTime": 10,
+                    "breaches": [
+                        {
+                            "level": "minor",
+                            "from": 616,
+                            "to": 645
+                        },
+                        {
+                            "level": "noBreach",
+                            "from": 601,
+                            "to": 608
+                        },
+                        {
+                            "level": "substantial",
+                            "from": 646,
+                            "to": 0
+                        }
+                    ]
+                }
+            ],
+            "rest": [
+                {
+                    "name": "15 minutes continuous rest time in 4 blocks",
+                    "minimumTime": 60,
+                    "continuousBreak": 15,
+                    "numberOfContinuousBreaks": 4,
+                    "descriptionContainsAtLeast": true,
+                    "nightBreaks": false,
+                    "consecutiveNightBreaks": false,
+                    "breaches": []
+                }
+            ]
+        },
+        {
+            "name": "24 hours",
+            "period": 1440,
+            "work": [
+                {
+                    "name": "12 hours work time",
+                    "maximumWorkTime": 12,
+                    "breaches": [
+                        {
+                            "level": "critical",
+                            "from": 811,
+                            "to": 0
+                        },
+                        {
+                            "level": "minor",
+                            "from": 736,
+                            "to": 765
+                        },
+                        {
+                            "level": "noBreach",
+                            "from": 721,
+                            "to": 728
+                        },
+                        {
+                            "level": "severe",
+                            "from": 796,
+                            "to": 810
+                        },
+                        {
+                            "level": "substantial",
+                            "from": 766,
+                            "to": 795
+                        }
+                    ]
+                }
+            ],
+            "rest": [
+                {
+                    "name": "7 hours continuous rest time in 1 blocks",
+                    "minimumTime": false,
+                    "continuousBreak": 420,
+                    "numberOfContinuousBreaks": 1,
+                    "descriptionContainsAtLeast": false,
+                    "nightBreaks": false,
+                    "consecutiveNightBreaks": false,
+                    "breaches": [
+                        {
+                            "level": "critical",
+                            "from": 0,
+                            "to": 5.5
+                        },
+                        {
+                            "level": "minor",
+                            "from": 6.25,
+                            "to": 6.75
+                        },
+                        {
+                            "level": "severe",
+                            "from": 5.5,
+                            "to": 5.75
+                        },
+                        {
+                            "level": "substantial",
+                            "from": 5.75,
+                            "to": 6.25
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "7 days",
+            "period": 10080,
+            "work": [
+                {
+                    "name": "72 hours work time",
+                    "maximumWorkTime": 72,
+                    "breaches": [
+                        {
+                            "level": "critical",
+                            "from": 4501,
+                            "to": 0
+                        },
+                        {
+                            "level": "minor",
+                            "from": 4336,
+                            "to": 4410
+                        },
+                        {
+                            "level": "severe",
+                            "from": 4471,
+                            "to": 4500
+                        },
+                        {
+                            "level": "substantial",
+                            "from": 4411,
+                            "to": 4470
+                        }
+                    ]
+                }
+            ],
+            "rest": [
+                {
+                    "name": "24 hours continuous rest time in 1 blocks",
+                    "minimumTime": false,
+                    "continuousBreak": 1440,
+                    "numberOfContinuousBreaks": 1,
+                    "descriptionContainsAtLeast": false,
+                    "nightBreaks": false,
+                    "consecutiveNightBreaks": false,
+                    "breaches": [
+                        {
+                            "level": "critical",
+                            "from": 0,
+                            "to": 22.5
+                        },
+                        {
+                            "level": "minor",
+                            "from": 23.25,
+                            "to": 23.75
+                        },
+                        {
+                            "level": "severe",
+                            "from": 22.5,
+                            "to": 22.75
+                        },
+                        {
+                            "level": "substantial",
+                            "from": 22.75,
+                            "to": 23.25
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "14 days",
+            "period": 20160,
+            "work": [
+                {
+                    "name": "144 hours work time",
+                    "maximumWorkTime": 144,
+                    "breaches": [
+                        {
+                            "level": "critical",
+                            "from": 8821,
+                            "to": 0
+                        },
+                        {
+                            "level": "minor",
+                            "from": 8656,
+                            "to": 8730
+                        },
+                        {
+                            "level": "severe",
+                            "from": 8791,
+                            "to": 8820
+                        },
+                        {
+                            "level": "substantial",
+                            "from": 8731,
+                            "to": 8790
+                        }
+                    ]
+                }
+            ],
+            "rest": [
+                {
+                    "name": "2 night rest breaks",
+                    "minimumTime": false,
+                    "continuousBreak": 0,
+                    "numberOfContinuousBreaks": 0,
+                    "descriptionContainsAtLeast": false,
+                    "nightBreaks": 2,
+                    "consecutiveNightBreaks": false,
+                    "breaches": [
+                        {
+                            "level": "critical",
+                            "from": 0,
+                            "to": 5.5
+                        },
+                        {
+                            "level": "minor",
+                            "from": 6.25,
+                            "to": 6.75
+                        },
+                        {
+                            "level": "severe",
+                            "from": 5.5,
+                            "to": 5.75
+                        },
+                        {
+                            "level": "substantial",
+                            "from": 5.75,
+                            "to": 6.25
+                        }
+                    ]
+                },
+                {
+                    "name": "2 consecutive night rest breaks",
+                    "minimumTime": false,
+                    "continuousBreak": 0,
+                    "numberOfContinuousBreaks": 0,
+                    "descriptionContainsAtLeast": false,
+                    "nightBreaks": false,
+                    "consecutiveNightBreaks": 2,
+                    "breaches": [
+                        {
+                            "level": "critical",
+                            "from": 0,
+                            "to": 0.5
+                        },
+                        {
+                            "level": "minor",
+                            "from": 6.25,
+                            "to": 6.75
+                        },
+                        {
+                            "level": "severe",
+                            "from": 5.5,
+                            "to": 5.75
+                        },
+                        {
+                            "level": "substantial",
+                            "from": 5.75,
+                            "to": 6.25
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
