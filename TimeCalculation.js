@@ -218,10 +218,11 @@ class TimeCalculation {
           breakEndTimes.push(...brk.endTimes);
         });
         let combinations = this.__getConsecutiveDaysCombinations(breakEndTimes);
-        let maxCombinationsLength = Math.max(
-          ...combinations.map((combination) => combination.length)
-        );
-        this.checklistItem["breaks"]["consecutiveNightBreaks"] = maxCombinationsLength;
+        let numberOfConsecutiveItems = 0;
+        combinations.forEach((combination) => {
+          numberOfConsecutiveItems += parseInt(combination.length / 2);
+        });
+        this.checklistItem["breaks"]["consecutiveNightBreaks"] = numberOfConsecutiveItems;
       }
     }
   }
