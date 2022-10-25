@@ -197,13 +197,13 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
       );
 
       // 1. MAXIMUM WORK BREACH
-      var maxWorkBreaches = breachCalculation._calculateMaxWorkBreach();
+      // var maxWorkBreaches = breachCalculation._calculateMaxWorkBreach();
 
       // 2. REST BREAKS BREACH
-      // var restBreaches = breachCalculation._calculateRestBreach();
+      var restBreaches = breachCalculation._calculateRestBreach();
 
-      if (maxWorkBreaches !== null) breaches.push(...maxWorkBreaches);
-      // if (restBreaches.length > 0) breaches.push(...restBreaches);
+      // if (maxWorkBreaches !== null) breaches.push(...maxWorkBreaches);
+      if (restBreaches.length > 0) breaches.push(...restBreaches);
     });
     return breaches;
   }
@@ -427,7 +427,8 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
       for (let i = 0; i < breachList.length; i++) {
         for (let j = 0; j < breachList.length; j++) {
           if (i != j &&
-            breachList[i]["periodStart"].isSame(breachList[j]["periodStart"])
+            breachList[i]["periodStart"].isSame(breachList[j]["periodStart"]) &&
+            breachList[i]["periodType"] === breachList[j]["periodType"]
           ) {
             let earlyBreachIndex = breachList[i]["totalPeriod"] > breachList[j]["totalPeriod"] ? 
             j : i;
