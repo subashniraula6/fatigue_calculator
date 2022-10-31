@@ -65,16 +65,17 @@ class BreachCalculation {
   }
 
   _calculateMaxWorkBreach() {
-    let { totalWork, periodType, totalPeriod, periodTime, lastEvent } = this.checklistItem;
+    let { totalWork, periodType, totalPeriod, periodTime, lastEvent } =
+      this.checklistItem;
     let { startTime: newEventStartTime } = this.event;
 
-    // Calculate only when last event is 'work' 
-    if(lastEvent === 'rest') return [];
+    // Calculate only when last event is 'work'
+    if (lastEvent === "rest") return [];
 
     // Fetch rule for the period
     var rule = this.ruleSets.find((rule) => rule["period"] / 60 === periodType);
     var maximumWorkTime = rule["work"][0]["maximumWorkTime"];
-    
+
     // Return empty if work done is less than rule maxwork
     if (totalWork <= maximumWorkTime * 60) {
       return [];
@@ -95,7 +96,9 @@ class BreachCalculation {
     let exceededMinutes = totalWork - maximumWorkTime * 60;
     let lastestTime =
       totalPeriod < periodType * 60 ? newEventStartTime : periodTime;
-    let breachInstant = lastestTime.clone().subtract(exceededMinutes, "minutes");
+    let breachInstant = lastestTime
+      .clone()
+      .subtract(exceededMinutes, "minutes");
 
     // If not in a range
     if (!breach) {
@@ -127,15 +130,20 @@ class BreachCalculation {
     this.checklistItem.breach["status"]["maxWorkBreach"] =
       calculatedBreach["level"] === "noBreach" ? false : true;
     this.__pushOrReplace(this.checklistItem, calculatedBreach);
+    // TODO: Do not push to maxWorkBreaches if new breach is same as already existed
+    // same SEVERITY and same TYPE
+    // But push if same TYPE and SEVERITY increases
 
     // return breach included checklist item
     maxWorkBreaches.push(this.checklistItem);
     return maxWorkBreaches;
   }
 
-  __pushOrReplace(checklistItem, breach){
-    let idx = checklistItem.breach.breaches.findIndex(item => item['type'] === breach['type']);
-    if(idx === -1) {
+  __pushOrReplace(checklistItem, breach) {
+    let idx = checklistItem.breach.breaches.findIndex(
+      (item) => item["type"] === breach["type"]
+    );
+    if (idx === -1) {
       checklistItem.breach["breaches"].push(breach);
     } else {
       checklistItem.breach["breaches"][idx] = breach;
@@ -144,7 +152,8 @@ class BreachCalculation {
 
   __calculateContinuousMinutesBreach() {
     let continuousMinutesBreaches = [];
-    let { periodType, lastEvent, totalPeriod, lastEventTime, periodTime } = this.checklistItem;
+    let { periodType, lastEvent, totalPeriod, lastEventTime, periodTime } =
+      this.checklistItem;
     let { startTime: newEventStartTime, eventType: newEventType } = this.event;
 
     // Fetch rule for the period
@@ -153,137 +162,89 @@ class BreachCalculation {
 
     restBreakRules.forEach((restBreakRule) => {
       console.log("CONTINUOUS BREAK MINUTES CALCULATION ");
-      if (restBreakRule["continuousBreak"]) {
-        var ruleEquivalentContinuousBreakCount =
-          this.___calculateRuleEquivalentContinuousBreakCount(
-            this.checklistItem["breaks"]["continuousBreaks"],
-            restBreakRule["continuousBreak"]
-          );
 
-        var ruleBreaksCount = restBreakRule["numberOfContinuousBreaks"];
-
-        // Calculate breach only if remaining time until checklist period 
-        // will not fulfill require number of continuous rests 
-        if (ruleEquivalentContinuousBreakCount < ruleBreaksCount) {
-            if(totalPeriod < periodType * 60) {
-              // ESTIMATION
-              let ruleEquivalentContinuousBreakCountUptoPreviousWork = ruleEquivalentContinuousBreakCount;
-              // if(lastEvent === 'rest'){
-              //   // decrease rule equivalent breaks count if calculated at this moment in previous steps(Time Calculation)
-              //   // check continuous breaks was added
-              //   let restDuration = newEventStartTime.clone().diff(lastEventTime, "minutes");
-              //   console.log("RestDuration", restDuration)
-              //   let currentRuleEquivalentContinuousBreakCount = this.___calculateRuleEquivalentContinuousBreakCount(
-              //     [{
-              //       continuousMinutes: Math.floor(restDuration / 15) * 15,
-              //       count: 1
-              //     }],
-              //     restBreakRule["continuousBreak"]
-              //   );
-              //   ruleEquivalentContinuousBreakCountUptoPreviousWork -= currentRuleEquivalentContinuousBreakCount;
-              // }
-
-               // calculate remaining time
-               let remainingTotalMinutes = lastEvent === 'work' ? 
-                periodTime.clone().diff(newEventStartTime, "minutes") :
-                  periodTime.clone().diff(lastEventTime, "minutes");
-
-              let remainingRestMinutes = (ruleBreaksCount - ruleEquivalentContinuousBreakCountUptoPreviousWork) * restBreakRule["continuousBreak"];
-              if(remainingRestMinutes > 0 && remainingTotalMinutes < remainingRestMinutes){
-                // let exceededMinutes = remainingRestMinutes - remainingTotalMinutes;
-                let breachInstant = periodTime.clone().subtract(remainingRestMinutes, "minutes");                
-                let breach;
-                if(restBreakRule['breaches'].length === 0){
-                  breach = {
-                    level: 'none',
-                    type: 'continuousBreak',
-                    breachInstant: breachInstant.format("YYYY-MM-DD HH:mm"),
-                    description: `Minimum ${restBreakRule["continuousBreak"] * ruleBreaksCount} minutes rest time in blocks of ${restBreakRule["continuousBreak"]} continuous minutes in any ${periodType} hours period`,
-                  };
-                } else {
-                   // find largest rest time
-                   let maxRestTime;
-                   let continuousBreaks = this.checklistItem["breaks"]["continuousBreaks"];
-                    var maxRestTimeUptoPrevWork = (continuousBreaks.length > 0) ? 
-                    continuousBreaks.sort(
-                      (left, right) =>
-                        right["continuousMinutes"] - left["continuousMinutes"]
-                    )[0]["continuousMinutes"] :
-                    0;
-                  maxRestTime = lastEvent === 'work' ? maxRestTimeUptoPrevWork : remainingTotalMinutes;
-                  console.log("MAX REST TIME", maxRestTime);
-                  let calculatedBreach = this.___categorizecontinuousStationaryBreakBreach(
-                    maxRestTime,
-                    restBreakRule,
-                    "continuousBreak"
-                  );
-                  breach = {
-                    ...calculatedBreach,
-                    breachInstant: breachInstant.format("YYYY-MM-DD HH:mm"),
-                  }
-                }
-                console.log("REST BREACH CALCULATED: ", breach);
-  
-                //set to checklist item
-                this.checklistItem.breach["status"]["continuousBreakBreach"] = true;
-                this.__pushOrReplace(this.checklistItem, breach);
-  
-                // return breach included checklist item
-                continuousMinutesBreaches.push(this.checklistItem);
-              }
-            } else {
-              // breach encountered
-              // Either categorize or create custom breach
-              let remainingRestMinutes = (ruleBreaksCount - ruleEquivalentContinuousBreakCount) * restBreakRule["continuousBreak"];   
-              let breachInstant = periodTime.clone().subtract(remainingRestMinutes, "minutes");
-              if(restBreakRule['breaches'].length === 0){
-                // create custom breach
-                let breach = {
-                  level: 'none',
-                  type: 'continuousBreak',
-                  breachInstant: breachInstant.format("YYYY-MM-DD HH:mm"),
-                  description: `Minimum ${restBreakRule["continuousBreak"] * ruleBreaksCount} minutes rest time in blocks of ${restBreakRule["continuousBreak"]} continuous minutes in any ${periodType} hours period`,
-                };
-  
-                //set to checklist item
-                this.checklistItem.breach["status"]["continuousBreakBreach"] = true;
-                this.__pushOrReplace(this.checklistItem, breach);
-  
-                // return breach included checklist item
-                continuousMinutesBreaches.push(this.checklistItem);
-              } else {
-                let continuousBreaks = this.checklistItem["breaks"]["continuousBreaks"];   
-                // find largest rest time
-                var maxRestTime = (continuousBreaks.length > 0) ? 
-                  continuousBreaks.sort(
-                    (left, right) =>
-                      right["continuousMinutes"] - left["continuousMinutes"]
-                  )[0]["continuousMinutes"] :
-                  0;
-                console.log("MAX REST TIME", maxRestTime);
-                
-                // calculate severeity based on aggregated break minutes
-                let calculatedBreach = this.___categorizecontinuousStationaryBreakBreach(
-                  maxRestTime,
-                  restBreakRule,
-                  "continuousBreak"
-                );
-                let breach = {
-                  ...calculatedBreach,
-                  breachInstant: breachInstant.format("YYYY-MM-DD HH:mm"),
-                }
-                console.log("REST BREACH CALCULATED: ", breach);
-                
-                //set to checklist item
-                this.checklistItem.breach["status"]["continuousBreakBreach"] = true;
-                this.__pushOrReplace(this.checklistItem, breach);
-  
-                // return breach included checklist item
-                continuousMinutesBreaches.push(this.checklistItem);
-            }  
-          }
-        }
+      if (!restBreakRule["continuousBreak"]) {
+        // Continuous break rule doesnt exist
+        return;
       }
+
+      var ruleEquivalentContinuousBreakCount =
+        this.___calculateRuleEquivalentContinuousBreakCount(
+          this.checklistItem["breaks"]["continuousBreaks"],
+          restBreakRule["continuousBreak"]
+        );
+
+      var ruleBreaksCount = restBreakRule["numberOfContinuousBreaks"];
+
+      if (ruleEquivalentContinuousBreakCount >= ruleBreaksCount) {
+        // continuous breaks satisfies the rule
+        return;
+      }
+
+      let remainingRestMinutes =
+        (ruleBreaksCount - ruleEquivalentContinuousBreakCount) *
+        restBreakRule["continuousBreak"];
+      // RemainingRestMinutes will always be positive at this stage
+
+      let remainingTotalMinutes = periodTime
+        .clone()
+        .diff(newEventStartTime, "minutes");
+
+      // if period doesnt expire and remaining rest minutes less than or equal remaining toal minutes
+      if (
+        totalPeriod < periodType * 60 &&
+        remainingRestMinutes <= remainingTotalMinutes
+      ) {
+        // There is still time to take REST before period expires
+        return;
+      }
+
+      let breachInstant = periodTime
+        .clone()
+        .subtract(remainingRestMinutes, "minutes");
+        
+      let breach;
+      if (restBreakRule["breaches"].length === 0) {
+        breach = {
+          level: "none",
+          type: "continuousBreak",
+          breachInstant: breachInstant.format("YYYY-MM-DD HH:mm"),
+          description: `Minimum ${
+            restBreakRule["continuousBreak"] * ruleBreaksCount
+          } minutes rest time in blocks of ${
+            restBreakRule["continuousBreak"]
+          } continuous minutes in any ${periodType} hours period`,
+        };
+      } else {
+        // find largest rest time
+        let continuousBreaks = this.checklistItem["breaks"]["continuousBreaks"];
+        var maxRestTime =
+          continuousBreaks.length > 0
+            ? continuousBreaks.sort(
+                (left, right) =>
+                  right["continuousMinutes"] - left["continuousMinutes"]
+              )[0]["continuousMinutes"]
+            : 0;
+        console.log("MAX REST TIME", maxRestTime);
+        let calculatedBreach =
+          this.___categorizecontinuousStationaryBreakBreach(
+            maxRestTime,
+            restBreakRule,
+            "continuousBreak"
+          );
+        breach = {
+          ...calculatedBreach,
+          breachInstant: breachInstant.format("YYYY-MM-DD HH:mm"),
+        };
+      }
+      console.log("REST BREACH CALCULATED: ", breach);
+
+      //set to checklist item
+      this.checklistItem.breach["status"]["continuousBreakBreach"] = true;
+      this.__pushOrReplace(this.checklistItem, breach);
+
+      // return breach included checklist item
+      continuousMinutesBreaches.push(this.checklistItem);
     });
     return continuousMinutesBreaches;
   }
