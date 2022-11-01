@@ -12,23 +12,15 @@
         },
         {
             "eventType": "Rest",
-            "startTime": "2018-05-12T01:00+10:00"
+            "startTime": "2018-05-10T03:00+10:00"
         },
         {
             "eventType": "Work",
-            "startTime": "2018-05-12T10:00+10:00"
+            "startTime": "2018-05-13T10:00+10:00"
         },
         {
             "eventType": "Rest",
-            "startTime": "2018-05-15T01:00+10:00"
-        },
-        {
-            "eventType": "Work",
-            "startTime": "2018-05-15T07:00+10:00"
-        },
-        {
-            "eventType": "Rest",
-            "startTime": "2018-05-15T08:00+10:00"
+            "startTime": "2018-05-14T02:00+10:00"
         }
     ]
 }

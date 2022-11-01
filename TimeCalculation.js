@@ -180,11 +180,12 @@ class TimeCalculation {
           periodTime.clone()
         );
         nightBreaks.forEach((brk) => {
-          let roundedDuration = this.__roundNearest15(
-            brk["continuousMinutes"],
-            lastEvent
-          );
-          this.__addBreakToChecklist(roundedDuration, "nightBreaks", brk['endTime']);
+          // let roundedDuration = this.__roundNearest15(
+          //   brk["continuousMinutes"],
+          //   lastEvent
+          // );
+          // this.__addBreakToChecklist(roundedDuration, "nightBreaks", brk['endTime']);
+          this.__addBreakToChecklist(brk["continuousMinutes"], "nightBreaks", brk['endTime']);
         });
       } else {
         // period doesnt exceed
@@ -212,7 +213,8 @@ class TimeCalculation {
       let validNightBreaks = nightBreaks.filter(
         (brk) => brk["continuousMinutes"] >= 7 * 60
       );
-      if (validNightBreaks.length >= 2) {
+      var validNightBreaksCount = validNightBreaks.reduce((prev, current) => prev + current.count, 0 );
+      if (validNightBreaksCount >= 2) {
         let breakEndTimes = [];
         validNightBreaks.forEach((brk) => {
           breakEndTimes.push(...brk.endTimes);
