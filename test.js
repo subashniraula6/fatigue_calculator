@@ -194,4 +194,23 @@ const moment = require("moment");
 // );
 // console.log(result);
 // console.log(maxCombinations)
-let date = new moment();
+// let date = new moment();
+
+function calculateNightBreachInstant(periodTime, numberOfBreaks){
+    let nightStart = periodTime.clone().subtract(1, "days").set({ h: 22, m: 0, s: 0 });
+    let nightEnd = periodTime.clone().set({ h: 8, m: 0, s: 0 });
+    
+    let baseTime = periodTime.clone();
+    if(periodTime.isBefore(nightStart.add(7, "hours"))){
+      baseTime = nightEnd.clone().subtract(1, 'days');
+    } else if(periodTime.isAfter(nightEnd.clone())){
+        baseTime = nightEnd.clone();
+    }
+    let breachInstant = baseTime.subtract(numberOfBreaks - 1, 'days')
+                                        .subtract(7, 'hours');
+    return breachInstant;
+}
+let periodTime = new moment().set({h: 21, m: 0, s: 0});
+console.log("Period Time ", periodTime.format("YYYY-MM-DD HH:mm"));
+let breachInstant = calculateNightBreachInstant(periodTime, 1);
+console.log("Breach Instant", breachInstant.format("YYYY-MM-DD HH:mm"));

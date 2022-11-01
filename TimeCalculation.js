@@ -55,7 +55,7 @@ class TimeCalculation {
         nightBreaks.push({
           continuousMinutes: duration,
           count: 1,
-          endTime: new moment(end.format()),
+          endTime: end.clone(),
         });
       }
     }
@@ -81,7 +81,7 @@ class TimeCalculation {
         nightBreaks.push({
           continuousMinutes: duration,
           count: 1,
-          endTime: new moment(end.format()),
+          endTime: end.clone(),
         });
         lastEventTime = nightEnd.clone().set({ h: 22, m: 0, s: 0 });
       }
