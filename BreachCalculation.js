@@ -260,6 +260,11 @@ class BreachCalculation {
 
         if(maxRest){
           breachInstant = maxRest['endTimes'][0]; 
+          let maxRestStart = breachInstant.clone().subtract(maxRestTime, "minutes");
+          let remainingMinutes = restBreakRule["continuousBreak"] - maxRestTime;
+          if(breachInstant.clone().add(remainingMinutes).isAfter(periodTime)){
+                breachInstant = maxRestStart.clone().subtract(remainingMinutes, "minutes");
+              }
         }
 
         breach = {

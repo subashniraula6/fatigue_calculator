@@ -197,12 +197,12 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
       );
 
       // 1. MAXIMUM WORK BREACH
-      // var maxWorkBreaches = breachCalculation._calculateMaxWorkBreach();
+      var maxWorkBreaches = breachCalculation._calculateMaxWorkBreach();
 
       // 2. REST BREAKS BREACH
       var restBreaches = breachCalculation._calculateRestBreach();
 
-      // if (maxWorkBreaches !== null) breaches.push(...maxWorkBreaches);
+      if (maxWorkBreaches !== null) breaches.push(...maxWorkBreaches);
       if (restBreaches.length > 0) breaches.push(...restBreaches);
     });
     return breaches;
