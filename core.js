@@ -1,6 +1,8 @@
 var moment = require("moment");
 const { BreachCalculation } = require("./BreachCalculation");
 var { TimeCalculation } = require("./TimeCalculation");
+var processEvent = require("./utility")['processEvent'];
+var toUtc = require("./utility")['toUtc'];
 
 function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
   function _handleEvent(event) {
@@ -14,7 +16,7 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
     let updatedChecklist = _updateCurrentChecklist(event, checklist);
 
     // Calculate breach
-    let breaches = _calculateBreach(updatedChecklist, event);
+    let breaches = _calculateBreach(updatedChecklist, event, ewd);
 
     // Add new checklist
     let newChecklist = _addChecklistItems(event, updatedChecklist);
@@ -28,22 +30,6 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
     console.log("Checklist at the end", [...updatedChecklist, ...newChecklist]);
 
     return { checklist: [...updatedChecklist, ...newChecklist], breaches };
-  }
-
-  // Convert to utc datetime
-  function toUtc(datetime) {
-    let offset = datetime.toString().slice(16);
-    var utcDateTime = new moment.utc(datetime).utcOffset(offset);
-    return utcDateTime;
-  }
-
-  // Pre-processing dataset
-  function processEvent(event) {
-    return {
-      ...event,
-      eventType: event.eventType.toLowerCase(),
-      startTime: toUtc(event.startTime),
-    };
   }
 
   function _updateCurrentChecklist(_event, checklist) {
@@ -187,13 +173,14 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
     return updatedChecklistItem;
   }
 
-  function _calculateBreach(checklist, event) {
+  function _calculateBreach(checklist, event, ewd) {
     let breaches = [];
     checklist.forEach((checklistItem) => {
       const breachCalculation = new BreachCalculation(
         checklistItem,
         ruleSets,
-        event
+        event,
+        ewd
       );
 
       // 1. MAXIMUM WORK BREACH
@@ -413,6 +400,8 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
   }
 
   if (Array.isArray(events)) {
+    // push to ewd
+    ewd.push(...events);
     let breachList = [];
     events.forEach((event) => {
       const { breaches, checklist: updatedChecklist } = _handleEvent(event);
@@ -441,7 +430,7 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
     return { checklist, breaches: breachList };
   } else {
     // push to ewd
-    ewd.push(...events);
+    ewd.push(events);
     return _handleEvent(events);
   }
 }

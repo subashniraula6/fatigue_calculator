@@ -1,12 +1,14 @@
 const { TimeCalculation } = require("./TimeCalculation");
+const processEvent = require('./utility')['processEvent'];
 
 var minutesToHourMinutes = require("./utility")["minutesToHourMinutes"];
 
 class BreachCalculation {
-  constructor(checklistItem, ruleSets, event) {
+  constructor(checklistItem, ruleSets, event, ewd) {
     this.checklistItem = checklistItem;
     this.ruleSets = ruleSets;
     this.event = event;
+    this.ewd = ewd;
   }
 
   ___calculateRuleEquivalentContinuousBreakCount(
@@ -84,6 +86,16 @@ class BreachCalculation {
       .subtract(7, "hours");
     return breachInstant;
   }
+
+  ___findClosestEvents(ewd, date){
+    let eventList = ewd.map((event) => processEvent(event));
+    let beforeEvents = eventList.filter(event => event.startTime.isSameOrBefore(date));
+    let afterEvents = eventList.filter(event => event.startTime.isSameOrAfter(date));
+    return {
+      beforeEvent: beforeEvents[beforeEvents.length - 1],
+      afterEvent: afterEvents[0]
+    }
+  };
 
   _calculateMaxWorkBreach() {
     let { totalWork, periodType, totalPeriod, periodTime, lastEvent } =
@@ -265,6 +277,11 @@ class BreachCalculation {
           if(breachInstant.clone().add(remainingMinutes).isAfter(periodTime)){
                 breachInstant = maxRestStart.clone().subtract(remainingMinutes, "minutes");
               }
+          // If breach instant is already in REST state it should be next Work time
+          let closestEvents = this.___findClosestEvents(this.ewd, breachInstant);
+          if(closestEvents.beforeEvent.eventType === 'rest'){
+            breachInstant = closestEvents.afterEvent.startTime;
+          }
         }
 
         breach = {
