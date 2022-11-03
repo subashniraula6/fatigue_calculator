@@ -22,5 +22,20 @@ function minutesToHourMinutes(totalMinutes) {
   return `${hour} hour ${minutes} minutes`;
 }
 
+// Check if checklist period exceeds
+function isPeriodExceeded(checklistItem){
+  if(checklistItem.totalPeriod / 60 >= checklistItem.periodType){
+    return true;
+  } else {
+    return false;
+  }
+}
 
-module.exports = { processEvent, toUtc, minutesToHourMinutes };
+// Fetch rule
+function fetchRule(checklistItem, ruleSets) {
+  return ruleSets.find(
+    (rule) => rule["period"] / 60 === checklistItem["periodType"]
+  );
+}
+
+module.exports = { processEvent, toUtc, minutesToHourMinutes, isPeriodExceeded, fetchRule };

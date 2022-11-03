@@ -3,10 +3,10 @@ const BreachCalculator = require("./core")["BreachCalculator"];
 var ruleSets = require("./translated_ruleset.json")['rules'];
 
 //DataSets
-var dataSet = require("./EWD Test Data - Standard hours SOLO Driver Heavy Vehicle/7days/001-7days Breach_Substantial Rest (less than 23h15m).json");
+var dataSet = require("./TestDataset/test.json");
 
 let ewd = [];
 let result = BreachCalculator(dataSet["ewd"], ruleSets, [], ewd);
-
+result = {...result, breaches: result.breaches.map(breach => ({...breach, periodStart: breach.periodStart.format("YYYY-MM-DD HH:mm")}))}
 // Print final result
 console.log("RESULT", JSON.stringify(result));
