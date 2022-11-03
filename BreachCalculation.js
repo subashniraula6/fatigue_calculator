@@ -235,6 +235,11 @@ class BreachCalculation {
       let breachInstant = periodTime
         .clone()
         .subtract(remainingRestMinutes, "minutes");
+      // If breach instant is already in REST state it should be next Work time
+      let closestEvents = this.___findClosestEvents(this.ewd, breachInstant);
+      if(closestEvents.beforeEvent.eventType === 'rest'){
+        breachInstant = closestEvents.afterEvent.startTime;
+      }
 
       let breach;
       if (restBreakRule["breaches"].length === 0) {
@@ -269,21 +274,6 @@ class BreachCalculation {
             restBreakRule,
             "continuousBreak"
           );
-
-        if(maxRest){
-          breachInstant = maxRest['endTimes'][0]; 
-          let maxRestStart = breachInstant.clone().subtract(maxRestTime, "minutes");
-          let remainingMinutes = restBreakRule["continuousBreak"] - maxRestTime;
-          if(breachInstant.clone().add(remainingMinutes).isAfter(periodTime)){
-                breachInstant = maxRestStart.clone().subtract(remainingMinutes, "minutes");
-              }
-          // If breach instant is already in REST state it should be next Work time
-          let closestEvents = this.___findClosestEvents(this.ewd, breachInstant);
-          if(closestEvents.beforeEvent.eventType === 'rest'){
-            breachInstant = closestEvents.afterEvent.startTime;
-          }
-        }
-
         breach = {
           ...calculatedBreach,
           breachInstant: breachInstant.format("YYYY-MM-DD HH:mm"),
