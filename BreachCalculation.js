@@ -1,13 +1,13 @@
 const { TimeCalculation } = require("./TimeCalculation");
+const { isPeriodExceeded } = require("./utility");
 const processEvent = require('./utility')['processEvent'];
 
 var minutesToHourMinutes = require("./utility")["minutesToHourMinutes"];
 
 class BreachCalculation {
-  constructor(checklistItem, ruleSets, event, ewd) {
+  constructor(checklistItem, ruleSets, ewd) {
     this.checklistItem = checklistItem;
     this.ruleSets = ruleSets;
-    this.event = event;
     this.ewd = ewd;
   }
 
@@ -97,13 +97,51 @@ class BreachCalculation {
     }
   };
 
-  _calculateMaxWorkBreach() {
-    let { totalWork, periodType, totalPeriod, periodTime, lastEvent } =
-      this.checklistItem;
-    let { startTime: newEventStartTime } = this.event;
+  ___calculateMaxWorkBreachInstant(checklistItem, rule, ewd){
+    let { totalWork, periodType, periodTime, lastEvent, event } = checklistItem;
+    // Fetch rule for the period
+    var rule = this.ruleSets.find((rule) => rule["period"] / 60 === periodType);
+    var maximumWorkTime = rule["work"][0]["maximumWorkTime"];
 
-    // Calculate only when last event is 'work'
-    if (lastEvent === "rest") return [];
+    // find breach instant
+    let exceededMinutes = totalWork - maximumWorkTime * 60;
+   
+    let breachInstant = isPeriodExceeded(this.checklistItem) ? periodTime.clone(): event.startTime.clone();
+    let processedEventList = ewd.map((event) => processEvent(event));
+    
+    // Remove latest event
+    processedEventList.pop();
+    let newLatestEvent = isPeriodExceeded(this.checklistItem) ? { eventType: lastEvent === 'rest' ? 'work' : 'rest', startTime: periodTime  } : event; 
+    // Add new calculated event
+    let eventList = [...processedEventList, newLatestEvent];
+
+    // Go back in time and calculate breach instant
+    for(let i = eventList.length - 1; i > 0; i--){
+      let event = eventList[i];
+      let prevEvent = eventList[i - 1];
+      let duration = event.startTime.clone().diff(prevEvent.startTime, "minutes");
+      if(event.eventType === 'rest' && prevEvent.eventType === 'work'){
+        if(duration > exceededMinutes){
+          breachInstant.subtract(exceededMinutes, "minutes");
+          break;
+        } else {
+          breachInstant.subtract(duration, "minutes");  
+          exceededMinutes -= duration;
+        }
+      } else {
+        breachInstant.subtract(duration, "minutes");
+      }
+    }
+    return breachInstant;
+  }
+
+  _calculateMaxWorkBreach() {
+    let { totalWork, periodType, totalPeriod, periodTime, lastEvent, lastEventTime, event } =
+      this.checklistItem;
+    let { startTime: newEventStartTime } = event;
+
+    // Calculate only when last event is 'work' if period not exceeded
+    if (lastEvent === "rest" && !isPeriodExceeded(this.checklistItem)) return [];
 
     // Fetch rule for the period
     var rule = this.ruleSets.find((rule) => rule["period"] / 60 === periodType);
@@ -125,14 +163,7 @@ class BreachCalculation {
       return totalWork >= from && totalWork <= to;
     });
 
-    // find breach instant
-    let exceededMinutes = totalWork - maximumWorkTime * 60;
-    let lastestTime =
-      totalPeriod < periodType * 60 ? newEventStartTime : periodTime;
-    let breachInstant = lastestTime
-      .clone()
-      .subtract(exceededMinutes, "minutes");
-
+    let breachInstant = this.___calculateMaxWorkBreachInstant(this.checklistItem, rule, this.ewd);
     // If not in a range
     if (!breach) {
       breach = {
@@ -185,9 +216,9 @@ class BreachCalculation {
 
   __calculateContinuousMinutesBreach() {
     let continuousMinutesBreaches = [];
-    let { periodType, lastEvent, totalPeriod, lastEventTime, periodTime } =
+    let { periodType, lastEvent, totalPeriod, lastEventTime, periodTime, event } =
       this.checklistItem;
-    let { startTime: newEventStartTime, eventType: newEventType } = this.event;
+    let { startTime: newEventStartTime, eventType: newEventType } = event;
 
     // Fetch rule for the period
     var rule = this.ruleSets.find((rule) => rule["period"] / 60 === periodType);
@@ -293,9 +324,9 @@ class BreachCalculation {
 
   __calculateNightRestBreaches() {
     let nightRestBreaches = [];
-    let { periodType, lastEvent, totalPeriod, lastEventTime, periodTime } =
+    let { periodType, lastEvent, totalPeriod, lastEventTime, periodTime, event } =
       this.checklistItem;
-    let { startTime: newEventStartTime, eventType: newEventType } = this.event;
+    let { startTime: newEventStartTime, eventType: newEventType } = event;
 
     // Fetch rule for the period
     var rule = this.ruleSets.find((rule) => rule["period"] / 60 === periodType);
@@ -398,9 +429,9 @@ class BreachCalculation {
   __calculateConsecutiveNightRestBreaches() {
     let consecutiveNightBreaches = [];
 
-    let { periodType, lastEvent, totalPeriod, lastEventTime, periodTime } =
+    let { periodType, lastEvent, totalPeriod, lastEventTime, periodTime, event } =
       this.checklistItem;
-    let { startTime: newEventStartTime, eventType: newEventType } = this.event;
+    let { startTime: newEventStartTime, eventType: newEventType } = event;
 
     // Fetch rule for the period
     var rule = this.ruleSets.find((rule) => rule["period"] / 60 === periodType);

@@ -18,7 +18,7 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
     let updatedChecklist = _updateCurrentChecklist(event, checklist);
 
     // Calculate breach
-    let breaches = _calculateBreach(updatedChecklist, event, ewd);
+    let breaches = _calculateBreach(updatedChecklist, ewd);
 
     // Add new checklist
     let newChecklist = _addChecklistItems(event, updatedChecklist);
@@ -48,8 +48,11 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
     console.log("FOR CHECKLIST ITEM", checklistItem);
     console.log("+++++++++++++++++++++++++++++++++++++++++++");
 
+    // Set new event info to checklist item
+    checklistItem.event = event;
+
     // calculate total times
-    var updatedItem = __calculateTime(checklistItem, event);
+    var updatedItem = __calculateTime(checklistItem);
     console.log("UPDATED CHECKLIST ITEM", {
       ...updatedItem,
       breaks: JSON.stringify(updatedItem.breaks),
@@ -57,13 +60,14 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
 
     // Check Last Relevant Rest And update status
     if (event.eventType === "work") {
-      updatedItem = __updateLastRelevantRest(updatedItem, event);
+      updatedItem = __updateLastRelevantRest(updatedItem);
     }
 
     return updatedItem;
   }
 
-  function __updateLastRelevantRest(checklistItem, event) {
+  function __updateLastRelevantRest(checklistItem) {
+    let { event } = checklistItem;
     let rule = fetchRule(checklistItem, ruleSets);
     // Check if last relevant break has occured
     if (rule["period"] / 60 >= 24) {
@@ -169,13 +173,12 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
     return updatedChecklistItem;
   }
 
-  function _calculateBreach(checklist, event, ewd) {
+  function _calculateBreach(checklist, ewd) {
     let breaches = [];
     checklist.forEach((checklistItem) => {
       const breachCalculation = new BreachCalculation(
         checklistItem,
         ruleSets,
-        event,
         ewd
       );
 
@@ -203,7 +206,7 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
     return {
       ...checklistItem,
       lastEvent: event["eventType"],
-      lastEventTime: toUtc(event["startTime"]),
+      lastEventTime: event["startTime"],
     };
   }
 
@@ -274,7 +277,7 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
     };
   }
 
-  function __addIfNoRelevantRestBreak(updatedChecklist) {
+  function __addIfNoRelevantRestBreak(updatedChecklist, newEvent) {
     let newChecklist = [];
     updatedChecklist.forEach((checklistItem) => {
       let rule = fetchRule(checklistItem, ruleSets);
@@ -284,9 +287,11 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
         checklistItem["lastRelevantBreak"] === false
       ) {
         // No last relevant rest so backtrace to next work event and calculate time upto this event
-        let { successiveEvent, eventsAfter } = ___calculateSuccessiveEvent(checklistItem);
+        let { successiveEvent, eventsAfter } = ___calculateSuccessiveEvent(checklistItem, events);
+        eventsAfter = eventsAfter.filter(event => event.startTime.isSameOrBefore(newEvent.startTime));
         // calculate times upto this event
         let newChecklistItem = __createChecklistItem(successiveEvent, rule);
+        console.log("eventsAfter >>>>>>>>>>>>>>>>>>>>>>>>>>>", eventsAfter)
         eventsAfter.forEach((event) => {
           let updatedChecklistItem = __updateChecklistItem(
             newChecklistItem,
@@ -296,8 +301,6 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
             updatedChecklistItem,
             event
           );
-          // mutuate new checklist item
-          newChecklistItem.length = 0;
           newChecklistItem = updatedChecklistItem;
         });
         newChecklist.push(newChecklistItem);
@@ -308,13 +311,13 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
 
   function _addChecklistItems(event, updatedChecklist) {
     let newChecklist = [];
-    // let noRelevantChecklists = __addIfNoRelevantRestBreak(updatedChecklist);
-    // noRelevantChecklists.length > 0 &&
-    //   console.log(
-    //     "CHECKLIST ADDED after 'No Relevant break' => ",
-    //     noRelevantChecklists
-    //   );
-    // newChecklist.push(...noRelevantChecklists);
+    let noRelevantChecklists = __addIfNoRelevantRestBreak(updatedChecklist, event);
+    noRelevantChecklists.length > 0 &&
+      console.log(
+        "CHECKLIST ADDED after 'No Relevant break' => ",
+        noRelevantChecklists
+      );
+    newChecklist.push(...noRelevantChecklists);
 
     if (event["eventType"] === "work") {
       console.log("ADDING - CHECKLIST ITEMS");
@@ -352,7 +355,7 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
     else return true;
   }
 
-  function ___calculateSuccessiveEvent(checklistItem) {
+  function ___calculateSuccessiveEvent(checklistItem, events) {
     console.log("Calculate successive work event");
     let eventList = Array.isArray(events) ? events : ewd;
     eventList = eventList.map((event) => processEvent(event));
@@ -380,10 +383,10 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
   }
 
   if (Array.isArray(events)) {
-    // push to ewd
-    ewd.push(...events);
     let breachList = [];
     events.forEach((event) => {
+      // push to ewd
+      ewd.push(event);
       const { breaches, checklist: updatedChecklist } = _handleEvent(event);
 
       // change checklist to updatedChecklist

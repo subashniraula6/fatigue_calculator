@@ -1,9 +1,8 @@
 var moment = require("moment");
 
 class TimeCalculation {
-  constructor(checklistItem, event) {
+  constructor(checklistItem) {
     this.checklistItem = checklistItem;
-    this.event = event;
   }
 
   __roundNearest15(duration, eventType) {
@@ -21,8 +20,8 @@ class TimeCalculation {
   }
 
   _calculateTotalPeriod() {
-    let { startTime: newEventStartTime } = this.event;
-    let { totalPeriod, lastEventTime, periodType } = this.checklistItem;
+    let { totalPeriod, lastEventTime, periodType, event } = this.checklistItem;
+    let { startTime: newEventStartTime } = event;
 
     // TOTAL EVENT INTERVAL TIME CALCULATION
     let totalDuration = moment.duration(newEventStartTime.diff(lastEventTime)); // newEventStartTime - lastEventTime
@@ -91,7 +90,6 @@ class TimeCalculation {
   }
 
   _calculateWorkTime() {
-    let { startTime: newEventStartTime, eventType: newEventType } = this.event;
     let {
       totalWork,
       totalPeriod,
@@ -99,8 +97,10 @@ class TimeCalculation {
       lastEventTime,
       periodType,
       periodTime,
+      event
     } = this.checklistItem;
-
+    let { startTime: newEventStartTime, eventType: newEventType } = event;
+    
     let workDuration = 0;
     if (lastEvent === "work" && newEventType === "rest") {
       if (totalPeriod >= periodType * 60) {
@@ -133,7 +133,6 @@ class TimeCalculation {
   }
 
   __calculateContinuousRestTimes() {
-    let { startTime: newEventStartTime, eventType: newEventType } = this.event;
     let {
       totalRest,
       totalPeriod,
@@ -141,7 +140,9 @@ class TimeCalculation {
       lastEventTime,
       periodType,
       periodTime,
+      event
     } = this.checklistItem;
+    let { startTime: newEventStartTime, eventType: newEventType } = event;
 
     let restDuration = 0;
     if (lastEvent === "rest" && newEventType === "work") {
@@ -163,14 +164,14 @@ class TimeCalculation {
       this.checklistItem["totalRest"] = totalRest;
 
       var roundedDuration = this.__roundNearest15(restDuration, lastEvent);
-      this.__addBreakToChecklist(roundedDuration, "continuousBreaks", this.event.startTime);
+      this.__addBreakToChecklist(roundedDuration, "continuousBreaks", newEventStartTime);
     }
   }
 
   __calculateNightRestTimes() {
-    let { startTime: newEventStartTime, eventType: newEventType } = this.event;
-    let { totalPeriod, lastEvent, lastEventTime, periodType, periodTime } =
-      this.checklistItem;
+    let { totalPeriod, lastEvent, lastEventTime, periodType, periodTime, event } =
+    this.checklistItem;
+    let { startTime: newEventStartTime, eventType: newEventType } = event;
 
     if (lastEvent === "rest" && newEventType === "work") {
       if (totalPeriod > periodType * 60) {
@@ -205,9 +206,9 @@ class TimeCalculation {
   }
 
   __calculateConsecutiveNightBreaks() {
-    let { eventType: newEventType } = this.event;
-    let { lastEvent } =
-      this.checklistItem;
+    let { lastEvent, event } = this.checklistItem;
+    let { eventType: newEventType } = event;
+
     if (lastEvent === "rest" && newEventType === "work") {
       let { nightBreaks } = this.checklistItem.breaks;
       let validNightBreaks = nightBreaks.filter(
