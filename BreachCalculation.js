@@ -405,7 +405,7 @@ class BreachCalculation {
       console.log("NIGHT REST BREACH CALCULATED: ", breach);
 
       // return breach included checklist item
-      nightRestBreaches.push(this.checklistItem);
+      nightRestBreaches.push(breach);
     });
     return nightRestBreaches;
   }
@@ -546,7 +546,7 @@ class BreachCalculation {
       console.log("CONSECUTIVE NIGHT REST BREACH CALCULATED: ", breach);
 
       // return breach included checklist item
-      consecutiveNightBreaches.push(this.checklistItem);
+      consecutiveNightBreaches.push(breach);
     });
     return consecutiveNightBreaches;
   }
