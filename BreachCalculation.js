@@ -131,6 +131,7 @@ class BreachCalculation {
       } else {
         breachInstant.subtract(duration, "minutes");
       }
+      if(exceededMinutes <= 0) break;
     }
     return breachInstant;
   }
