@@ -174,7 +174,7 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
   }
 
   function _calculateBreach(checklist, ewd) {
-    let breaches = [];
+    let breachList = []; 
     checklist.forEach((checklistItem) => {
       const breachCalculation = new BreachCalculation(
         checklistItem,
@@ -182,16 +182,35 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
         ewd
       );
 
+      let breaches = [];
       // 1. MAXIMUM WORK BREACH
       var maxWorkBreaches = breachCalculation._calculateMaxWorkBreach();
+      breaches.push(...maxWorkBreaches);
 
       // 2. REST BREAKS BREACH
       var restBreaches = breachCalculation._calculateRestBreach();
+      breaches.push(...restBreaches);
 
-      if (maxWorkBreaches !== null) breaches.push(...maxWorkBreaches);
-      if (restBreaches.length > 0) breaches.push(...restBreaches);
+      if(breaches.length > 0){
+        breaches.forEach(breach => {
+          __pushOrReplace(checklistItem, breach)
+        });
+        // checklistItem.breach.breaches.push(...breaches);    
+        breachList.push(checklistItem);
+      }
     });
-    return breaches;
+    return breachList;
+  }
+
+  function __pushOrReplace(checklistItem, breach) {
+    let idx = checklistItem.breach.breaches.findIndex(
+      (item) => item["type"] === breach["type"]
+    );
+    if (idx === -1) {
+      checklistItem.breach["breaches"].push(breach);
+    } else {
+      checklistItem.breach["breaches"][idx] = breach;
+    }
   }
 
   function _changeLastEvent(checklist, event) {
@@ -287,23 +306,25 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
         checklistItem["lastRelevantBreak"] === false
       ) {
         // No last relevant rest so backtrace to next work event and calculate time upto this event
-        let { successiveEvent, eventsAfter } = ___calculateSuccessiveEvent(checklistItem, events);
-        eventsAfter = eventsAfter.filter(event => event.startTime.isSameOrBefore(newEvent.startTime));
-        // calculate times upto this event
-        let newChecklistItem = __createChecklistItem(successiveEvent, rule);
-        console.log("eventsAfter >>>>>>>>>>>>>>>>>>>>>>>>>>>", eventsAfter)
-        eventsAfter.forEach((event) => {
-          let updatedChecklistItem = __updateChecklistItem(
-            newChecklistItem,
-            event
-          );
-          updatedChecklistItem = _changeLastEventForChecklistItem(
-            updatedChecklistItem,
-            event
-          );
-          newChecklistItem = updatedChecklistItem;
-        });
-        newChecklist.push(newChecklistItem);
+        let nextEvent = ___calculateSuccessiveEvent(checklistItem, events);
+        if(nextEvent){
+          let { successiveEvent, eventsAfter } = nextEvent;
+          eventsAfter = eventsAfter.filter(event => event.startTime.isSameOrBefore(newEvent.startTime));
+          // calculate times upto this event
+          let newChecklistItem = __createChecklistItem(successiveEvent, rule);
+          eventsAfter.forEach((event) => {
+            let updatedChecklistItem = __updateChecklistItem(
+              newChecklistItem,
+              event
+            );
+            updatedChecklistItem = _changeLastEventForChecklistItem(
+              updatedChecklistItem,
+              event
+            );
+            newChecklistItem = updatedChecklistItem;
+          });
+          newChecklist.push(newChecklistItem);
+        }
       }
     });
     return newChecklist;
@@ -363,16 +384,27 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
     let sortedEventList = eventList.sort(function (left, right) {
       return left.startTime.diff(right.startTime);
     });
-    let currentChecklistItemIndex = sortedEventList.findIndex((item) =>
-      item["startTime"].isSame(checklistItem["periodStart"])
-    );
-    if (currentChecklistItemIndex === -1) {
-      throw new Error("Cannot find successive event");
-    }
-    var successiveEvent = sortedEventList[currentChecklistItemIndex + 1];
-    if (successiveEvent["eventType"].toLowerCase() === "rest") {
-      successiveEvent = sortedEventList[currentChecklistItemIndex + 2];
-    }
+
+    // Option 1 => Find consecutive event
+    // let currentChecklistItemIndex = sortedEventList.findIndex((item) =>
+    //   item["startTime"].isSame(checklistItem["periodStart"])
+    // );
+    // if (currentChecklistItemIndex === -1) {
+    //   throw new Error("Cannot find successive event");
+    // }
+    // var successiveEvent = sortedEventList[currentChecklistItemIndex + 1];
+    // if (successiveEvent["eventType"].toLowerCase() === "rest") {
+    //   successiveEvent = sortedEventList[currentChecklistItemIndex + 2];
+    // }
+
+    // Option 2 => Find next day start event
+    let nextDayWorkEvent = sortedEventList.find(item => {
+      let nextDay = checklistItem["periodStart"].clone().add(1, 'days');
+      return item['startTime'].isBetween(nextDay.clone().startOf('day'), nextDay.clone().endOf('day'), null, []) &&
+      item['eventType'] === 'work';
+    });
+    if(!nextDayWorkEvent) return null;
+    var successiveEvent = nextDayWorkEvent;
 
     let eventsAfter = sortedEventList.filter((sortedEvent) =>
       moment(sortedEvent["startTime"]).isAfter(
@@ -394,21 +426,25 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
       checklist.push(...updatedChecklist);
 
       breachList.push(...breaches);
-
       // Remove reduntant breaches
-      for (let i = 0; i < breachList.length; i++) {
-        for (let j = 0; j < breachList.length; j++) {
+      let toRemoveIndices = [];
+      for (let i = 0; i < breachList.length - 1; i++) {
+        for (let j = i; j < breachList.length; j++) {
           if (i != j &&
             breachList[i]["periodStart"].isSame(breachList[j]["periodStart"]) &&
             breachList[i]["periodType"] === breachList[j]["periodType"]
           ) {
             let earlyBreachIndex = breachList[i]["totalPeriod"] > breachList[j]["totalPeriod"] ? 
             j : i;
-            //remove early same type breach
-            breachList.splice(earlyBreachIndex, 1);
+            toRemoveIndices.push(earlyBreachIndex);
+            // //remove early same type breach
+            // breachList.splice(earlyBreachIndex, 1);
           }
         }
       }
+      toRemoveIndices.forEach(index => {
+        breachList.splice(index, 1);
+      });
     });
     return { checklist, breaches: breachList };
   } else {

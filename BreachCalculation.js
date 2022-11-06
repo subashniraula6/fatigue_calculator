@@ -190,16 +190,8 @@ class BreachCalculation {
 
     console.log("MAX WORK BREACH CALCULATED: ", calculatedBreach);
 
-    //set to checklist item
-    this.checklistItem.breach["status"]["maxWorkBreach"] =
-      calculatedBreach["level"] === "noBreach" ? false : true;
-    this.__pushOrReplace(this.checklistItem, calculatedBreach);
-    // TODO: Do not push to maxWorkBreaches if new breach is same as already existed
-    // same SEVERITY and same TYPE
-    // But push if same TYPE and SEVERITY increases
-
-    // return breach included checklist item
-    maxWorkBreaches.push(this.checklistItem);
+    // // return breach included checklist item
+    maxWorkBreaches.push(calculatedBreach);
     return maxWorkBreaches;
   }
 
@@ -311,13 +303,8 @@ class BreachCalculation {
         };
       }
       console.log("CONTINUOUS REST BREACH CALCULATED: ", breach);
-
-      //set to checklist item
-      this.checklistItem.breach["status"]["continuousBreakBreach"] = true;
-      this.__pushOrReplace(this.checklistItem, breach);
-
-      // return breach included checklist item
-      continuousMinutesBreaches.push(this.checklistItem);
+      
+      continuousMinutesBreaches.push(breach);
     });
     return continuousMinutesBreaches;
   }
@@ -415,10 +402,6 @@ class BreachCalculation {
       );
       breach = { ...breach, breachInstant: breachInstant.format("YYYY-MM-DD HH:mm")};
       console.log("NIGHT REST BREACH CALCULATED: ", breach);
-
-      // Set to checklist item
-      this.checklistItem.breach["status"]["nightBreaksBreach"] = true;
-      this.__pushOrReplace(this.checklistItem, breach);
 
       // return breach included checklist item
       nightRestBreaches.push(this.checklistItem);
@@ -560,10 +543,6 @@ class BreachCalculation {
       }; 
 
       console.log("CONSECUTIVE NIGHT REST BREACH CALCULATED: ", breach);
-
-      // Set to checklist item
-      this.checklistItem.breach["status"]["consecutiveNightBreaksBreach"] = true;
-      this.__pushOrReplace(this.checklistItem, breach);
 
       // return breach included checklist item
       consecutiveNightBreaches.push(this.checklistItem);
