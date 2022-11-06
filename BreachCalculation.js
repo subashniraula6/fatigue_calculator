@@ -159,10 +159,6 @@ class BreachCalculation {
     console.log("CALCULATED NIGHT BREACH INSTANT", breachInstant.format("YYYY-MM-DD HH:mm"))
     return breachInstant;
   }
-  
-    console.log("CALCULATED NIGHT BREACH INSTANT", breachInstant.format("YYYY-MM-DD HH:mm"))
-    return breachInstant;
-  }
 
   ___findClosestEvents(ewd, date){
     let eventList = ewd.map((event) => processEvent(event));
