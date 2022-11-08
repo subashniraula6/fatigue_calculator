@@ -68,8 +68,7 @@ class BreachCalculation {
     };
   }
 
-  ___calculateNightBreachInstant(checklistItem, numberOfBreaks, ewd) {
-    let { periodTime } = checklistItem;
+  ___calculateNightBreachInstant(periodTime, numberOfBreaks, ewd = null) {
     let nightStart = periodTime
       .clone()
       .subtract(1, "days")
@@ -88,6 +87,8 @@ class BreachCalculation {
       .clone()
       .subtract(numberOfBreaks - 1, "days")
       .subtract(7, "hours");
+
+    if(!ewd) return breachInstant; 
 
     // Find possible next breach instant that breaks night break
     let instant = breachInstant.clone();
@@ -453,7 +454,7 @@ class BreachCalculation {
         )[0]['continuousMinutes'] : null;
 
       let breachInstant = this.___calculateNightBreachInstant(
-        this.checklistItem,
+        periodTime,
         remainingNightBreaks,
         this.ewd
       );
@@ -580,7 +581,7 @@ class BreachCalculation {
 
       
       breachInstant = this.___calculateNightBreachInstant(
-        this.checklistItem,
+        periodTime,
         remainingConsecutiveNightBreaks * 2,
         this.ewd
       );
@@ -623,6 +624,76 @@ class BreachCalculation {
     restBreaches.push(...consecutiveNightBreaches);
 
     return restBreaches;
+  }
+
+  _udpateBreachTime() {
+    let { event, totalWork, periodType, periodTime } = this.checklistItem;
+    if(event.eventType === 'work' && !isPeriodExceeded(this.checklistItem)){
+      console.log("CALCULATING BREACH TIME....");
+      // MaxWork Breach Time
+      // Fetch rule for the period
+      var rule = this.ruleSets.find((rule) => rule["period"] / 60 === periodType);
+      var maximumWorkTime = rule["work"][0]["maximumWorkTime"] * 60;
+      let remainingWorkMinutes = maximumWorkTime - totalWork;
+      let maxWorkBreachInstant = event.startTime.clone().add(remainingWorkMinutes, 'minutes');
+
+      let continuousMinutesBreachTime = null;
+      let nightBreachTime = null;
+      let consecutiveNightBreachTime = null;
+      
+      var restBreakRules = rule["rest"];
+      restBreakRules.forEach((restBreakRule) => {
+        if (restBreakRule["continuousBreak"]) {
+          // Continuous Minutes Breach Time
+          var ruleEquivalentContinuousBreakCount =
+            this.___calculateRuleEquivalentContinuousBreakCount(
+              this.checklistItem["breaks"]["continuousBreaks"],
+              restBreakRule["continuousBreak"]
+            );
+          
+          var ruleBreaksCount = restBreakRule["numberOfContinuousBreaks"];
+          let remainingRestMinutes =
+          (ruleBreaksCount - ruleEquivalentContinuousBreakCount) *
+          restBreakRule["continuousBreak"];
+          
+          continuousMinutesBreachTime = periodTime.clone().subtract(remainingRestMinutes, "minutes");
+        }
+
+        if (restBreakRule["nightBreaks"]) {
+          // Night break rule breach time
+          let validNightBreaks = this.checklistItem["breaks"]["nightBreaks"].filter(
+            (brk) => brk["continuousMinutes"] >= 7 * 60
+          );
+          let nightBreaksCount = validNightBreaks.length;
+
+          var ruleBreaksCount = restBreakRule["nightBreaks"];
+
+          if (nightBreaksCount < ruleBreaksCount) {
+            let remainingNightBreaks = ruleBreaksCount - nightBreaksCount;
+            nightBreachTime = this.___calculateNightBreachInstant(periodTime, remainingNightBreaks);
+          
+          }
+        }
+
+        if (restBreakRule["consecutiveNightBreaks"]) {
+          // Consecutive night break rule breach time
+          var ruleBreaksCount = restBreakRule["consecutiveNightBreaks"];
+          let consecutiveNightBreaks = this.checklistItem['breaks']['consecutiveNightBreaks'];
+          if (consecutiveNightBreaks < ruleBreaksCount) {
+            let remainingConsecutiveNightBreaks = ruleBreaksCount - consecutiveNightBreaks;
+            consecutiveNightBreachTime = this.___calculateNightBreachInstant(periodTime, remainingConsecutiveNightBreaks * 2);  
+          
+          }
+        }
+      });
+      // Find lated breach time
+      let breachTimes = [{maxWorkBreach: maxWorkBreachInstant}];
+      continuousMinutesBreachTime && breachTimes.push({continuousMinutes: continuousMinutesBreachTime});
+      nightBreachTime && breachTimes.push({nightBreak: nightBreachTime});
+      consecutiveNightBreachTime && breachTimes.push({consecutiveNightBreak: consecutiveNightBreachTime});
+      
+      this.checklistItem.nextBreaches = breachTimes;
+    }
   }
 }
 

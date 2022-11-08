@@ -29,9 +29,12 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
     // Change last event
     updatedChecklist = _changeLastEvent(updatedChecklist, event);
 
+    // Breach instants
+    let breachInstants = _simplifyChecklist([...updatedChecklist, ...newChecklist]);
+
     console.log("Checklist at the end", [...updatedChecklist, ...newChecklist]);
 
-    return { checklist: [...updatedChecklist, ...newChecklist], breaches };
+    return { checklist: [...updatedChecklist, ...newChecklist], breaches, breachInstants };
   }
 
   function _updateCurrentChecklist(_event, checklist) {
@@ -181,6 +184,7 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
         ruleSets,
         ewd
       );
+      
 
       let breaches = [];
       // 1. MAXIMUM WORK BREACH
@@ -190,6 +194,9 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
       // 2. REST BREAKS BREACH
       var restBreaches = breachCalculation._calculateRestBreach();
       breaches.push(...restBreaches);
+
+      // 3. Update Breach Time status
+      breachCalculation._udpateBreachTime();
 
       if(breaches.length > 0){
         breaches.forEach(breach => {
@@ -268,11 +275,10 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
         consecutiveNightBreaks: 0,
       },
       maxMinutes: rule["work"][0]["maximumWorkTime"] * 60,
-      periodTime: toUtc(event["startTime"]).add({
-        minutes: rule["period"],
-      }),
+      periodTime: toUtc(event["startTime"]).add(rule["period"], "minutes"),
       lastEvent: event["eventType"],
       lastEventTime: toUtc(event["startTime"]),
+      event: event,
       breach: {
         status: {
           maxWorkBreach: requiresMaxWorkCheck(rule) ? null : false,
@@ -365,6 +371,16 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
         }
       });
     }
+    // Update breach time
+    newChecklist.forEach((checklistItem) => {
+      const breachCalculation = new BreachCalculation(
+        checklistItem,
+        ruleSets,
+        null
+      );
+      breachCalculation._udpateBreachTime();
+    });
+    
     return newChecklist;
   }
 
@@ -414,12 +430,31 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
     return { successiveEvent, eventsAfter };
   }
 
+  function _simplifyChecklist(checklist){
+    let list = [];
+    checklist.forEach(checklistItem => {
+      let {nextBreaches} = checklistItem;  
+      nextBreaches.forEach(time => {
+          list.push({
+            periodType: checklistItem.periodType,
+            type: Object.keys(time)[0],
+            breachInstant: Object.values(time)[0]
+          });
+      });
+    });
+    let sortedList = list.sort((left, right) => {
+      return left.breachInstant.diff(right.breachInstant)
+    });
+    return sortedList.map(time => ({...time, breachInstant: time.breachInstant.format()}));
+  }
+
   if (Array.isArray(events)) {
     let breachList = [];
     events.forEach((event) => {
       // push to ewd
       ewd.push(event);
-      const { breaches, checklist: updatedChecklist } = _handleEvent(event);
+      const { breaches, checklist: updatedChecklist, breachInstants } = _handleEvent(event);
+      console.log("Breach instants", breachInstants)
 
       // change checklist to updatedChecklist
       checklist.length = 0;
