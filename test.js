@@ -196,21 +196,138 @@ const moment = require("moment");
 // console.log(maxCombinations)
 // let date = new moment();
 
-function calculateNightBreachInstant(periodTime, numberOfBreaks){
-    let nightStart = periodTime.clone().subtract(1, "days").set({ h: 22, m: 0, s: 0 });
-    let nightEnd = periodTime.clone().set({ h: 8, m: 0, s: 0 });
+// function calculateNightBreachInstant(periodTime, numberOfBreaks){
+//     let nightStart = periodTime.clone().subtract(1, "days").set({ h: 22, m: 0, s: 0 });
+//     let nightEnd = periodTime.clone().set({ h: 8, m: 0, s: 0 });
     
-    let baseTime = periodTime.clone();
-    if(periodTime.isBefore(nightStart.add(7, "hours"))){
-      baseTime = nightEnd.clone().subtract(1, 'days');
-    } else if(periodTime.isAfter(nightEnd.clone())){
-        baseTime = nightEnd.clone();
+//     let baseTime = periodTime.clone();
+//     if(periodTime.isBefore(nightStart.add(7, "hours"))){
+//       baseTime = nightEnd.clone().subtract(1, 'days');
+//     } else if(periodTime.isAfter(nightEnd.clone())){
+//         baseTime = nightEnd.clone();
+//     }
+//     let breachInstant = baseTime.subtract(numberOfBreaks - 1, 'days')
+//                                         .subtract(7, 'hours');
+//     return breachInstant;
+// }
+// let periodTime = new moment().set({h: 21, m: 0, s: 0});
+// console.log("Period Time ", periodTime.format("YYYY-MM-DD HH:mm"));
+// let breachInstant = calculateNightBreachInstant(periodTime, 1);
+// console.log("Breach Instant", breachInstant.format("YYYY-MM-DD HH:mm"));
+
+let events = [
+  {
+    eventType: "work",
+    startTime: moment.parseZone("2018-05-13T14:00+10:00")
+  },
+  {
+      eventType: "rest",
+      startTime: moment.parseZone("2018-05-13T16:00+10:00")
+  },
+  {
+      eventType: "work",
+      startTime: moment.parseZone("2018-05-15T03:00+10:00")
+  },
+  {
+      eventType: "rest",
+      startTime: moment.parseZone("2018-05-15T06:00+10:00")
+  }
+];
+function ___calculateNightBreachInstant(periodTime, numberOfBreaks, ewd) {
+  let nightStart = periodTime
+    .clone()
+    .subtract(1, "days")
+    .set({ h: 22, m: 0, s: 0 });
+  let nightEnd = periodTime.clone().set({ h: 8, m: 0, s: 0 });
+
+  let baseTime;
+  if (periodTime.isBefore(nightStart.add(7, "hours"))) {
+    baseTime = nightEnd.clone().subtract(1, "days");
+  } else if (periodTime.isAfter(nightEnd)) {
+    baseTime = nightEnd.clone();
+  } else {
+    baseTime = periodTime.clone();
+  }
+  let breachInstant = baseTime
+    .clone()
+    .subtract(numberOfBreaks - 1, "days")
+    .subtract(7, "hours");
+
+  // TODO: If this breach instant is in REST state, it should be next workTime that breaks night break 
+  let instant = breachInstant.clone();
+  let eventsAfter = ewd.filter(event => event.startTime.isSameOrAfter(breachInstant));
+  if(!breachInstant.isSame(eventsAfter[0])){
+    let firstEvent = {
+      eventType: eventsAfter[0].eventType === 'work' ? 'rest': 'work', 
+      startTime: breachInstant.clone()
+    };
+    eventsAfter.unshift(firstEvent);
+  }
+  console.log("events", ewd.map(event => ({...event, startTime: event.startTime.format("YYYY-MM-DD HH:mm")})));
+  console.log("breachInstant", breachInstant.format("YYYY-MM-DD HH:mm"))
+  console.log("eventsAfter", eventsAfter.map(event => ({...event, startTime: event.startTime.format("YYYY-MM-DD HH:mm")})));
+  
+  while(1){
+    let start = instant.clone().add(7, 'hours').subtract(1, 'days').set({ h: 22, m: 0, s: 0 });
+    let end = instant.clone().add(7, 'hours').set({ h: 8, m: 0, s: 0 });
+    
+    
+    start = start.isBefore(breachInstant) ? breachInstant.clone() : start;
+    end = end.isAfter(baseTime) ? baseTime.clone() : end;
+
+    console.log(`Checking Night rest for Range: start ${start.format("YYYY-MM-DD HH:mm")} && end ${end.format("YYYY-MM-DD HH:mm")} ====>>>>>>>>>>>>>>>>`,)
+
+    // Check if night rest lies between start and end
+    let isPresent = false;
+    for(let i=0; i < eventsAfter.length - 1 ; i++){
+      let event = eventsAfter[i];
+      let nextEvent = eventsAfter[i+1];
+      if(event.eventType === 'rest'){
+        if(event.startTime.isSameOrBefore(end) && nextEvent.startTime.isSameOrAfter(start)){
+          // this rest lies within start and end
+          let intersectRestStart = event.startTime.isSameOrBefore(start) ? start.clone() : event.startTime.clone();
+          let intersectRestEnd = nextEvent.startTime.isSameOrAfter(end) ? end.clone() : nextEvent.startTime.clone();
+          console.log("intersectRestStart", intersectRestStart.format("YYYY-MM-DD HH:mm"));
+          console.log("intersectRestEnd", intersectRestEnd.format("YYYY-MM-DD HH:mm"));
+          let intersectDuration = intersectRestEnd.diff(intersectRestStart, "hours");
+          if(intersectDuration >= 7){
+            isPresent = true;
+            console.log("Night Rest found. Skipping this loop....................")
+            break;
+          }
+          console.log("Night Rest Not found")
+        }
+      }
     }
-    let breachInstant = baseTime.subtract(numberOfBreaks - 1, 'days')
-                                        .subtract(7, 'hours');
-    return breachInstant;
+    !isPresent && console.log("Breaking loop and calculating breach Work Time....")
+    if(!isPresent){
+      // Find work that lies between end-7 to end
+      for(let i=0; i < eventsAfter.length - 1 ; i++){
+        let event = eventsAfter[i];
+        let nextEvent = eventsAfter[i+1];
+        if(event.eventType === 'work'){
+          let endMinus7 = end.clone().subtract(7, 'hours');
+          if(event.startTime.isSameOrBefore(end) && nextEvent.startTime.isAfter(endMinus7)){
+            breachInstant = event.startTime.isSameOrBefore(endMinus7) ? endMinus7.clone() : event.startTime; 
+          }
+        }
+      } 
+      break;
+    }
+    // increment instant to next day
+    instant.add(1, 'days');
+    if(end.isSameOrAfter(baseTime)){
+      break;
+    }
+  };
+
+  return breachInstant;
 }
-let periodTime = new moment().set({h: 21, m: 0, s: 0});
-console.log("Period Time ", periodTime.format("YYYY-MM-DD HH:mm"));
-let breachInstant = calculateNightBreachInstant(periodTime, 1);
-console.log("Breach Instant", breachInstant.format("YYYY-MM-DD HH:mm"));
+let period = moment.parseZone("2018-05-15T05:00+10:00");
+let numberOfBreaks = 2;
+var breachInstant = ___calculateNightBreachInstant(period, numberOfBreaks, events);
+formattedEvents = events.map(event => ({...event, startTime: event.startTime.format("YYYY-MM-DD HH:mm")}));
+console.log("Events...", formattedEvents);
+console.log("Number of rest breaks", numberOfBreaks)
+console.log("Period...............", period.format("YYYY-MM-DD HH:mm"))
+console.log("breach instant.......", breachInstant.format("YYYY-MM-DD HH:mm"));

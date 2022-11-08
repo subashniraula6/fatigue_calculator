@@ -69,7 +69,7 @@ class BreachCalculation {
   }
 
   ___calculateNightBreachInstant(checklistItem, numberOfBreaks, ewd) {
-    let { periodTime, lastEventTime } = checklistItem;
+    let { periodTime } = checklistItem;
     let nightStart = periodTime
       .clone()
       .subtract(1, "days")
@@ -85,10 +85,80 @@ class BreachCalculation {
       baseTime = periodTime.clone();
     }
     let breachInstant = baseTime
+      .clone()
       .subtract(numberOfBreaks - 1, "days")
       .subtract(7, "hours");
 
-    // TODO: If this breach instant is in REST state, it should be next workTime that breaks night break 
+    // Find possible next breach instant that breaks night break
+    let instant = breachInstant.clone();
+    ewd = ewd.map(event => processEvent(event))
+    let eventsAfter = ewd.filter(event => event.startTime.isSameOrAfter(breachInstant));
+    if(!breachInstant.isSame(eventsAfter[0])){
+      let firstEvent = {
+        eventType: eventsAfter[0].eventType === 'work' ? 'rest': 'work', 
+        startTime: breachInstant.clone()
+      };
+      eventsAfter.unshift(firstEvent);
+    }
+    console.log("events", ewd.map(event => ({...event, startTime: event.startTime.format("YYYY-MM-DD HH:mm")})));
+    console.log("breachInstant", breachInstant.format("YYYY-MM-DD HH:mm"))
+    console.log("eventsAfter", eventsAfter.map(event => ({...event, startTime: event.startTime.format("YYYY-MM-DD HH:mm")})));
+    
+    while(1){
+      let start = instant.clone().add(7, 'hours').subtract(1, 'days').set({ h: 22, m: 0, s: 0 });
+      let end = instant.clone().add(7, 'hours').set({ h: 8, m: 0, s: 0 });
+      
+      
+      start = start.isBefore(breachInstant) ? breachInstant.clone() : start;
+      end = end.isAfter(baseTime) ? baseTime.clone() : end;
+  
+      console.log(`Checking Night rest for Range: start ${start.format("YYYY-MM-DD HH:mm")} && end ${end.format("YYYY-MM-DD HH:mm")} ====>>>>>>>>>>>>>>>>`,)
+  
+      // Check if night rest lies between start and end
+      let isPresent = false;
+      for(let i=0; i < eventsAfter.length - 1 ; i++){
+        let event = eventsAfter[i];
+        let nextEvent = eventsAfter[i+1];
+        if(event.eventType === 'rest'){
+          if(event.startTime.isSameOrBefore(end) && nextEvent.startTime.isSameOrAfter(start)){
+            // this rest lies within start and end
+            let intersectRestStart = event.startTime.isSameOrBefore(start) ? start.clone() : event.startTime.clone();
+            let intersectRestEnd = nextEvent.startTime.isSameOrAfter(end) ? end.clone() : nextEvent.startTime.clone();
+            console.log("intersectRestStart", intersectRestStart.format("YYYY-MM-DD HH:mm"));
+            console.log("intersectRestEnd", intersectRestEnd.format("YYYY-MM-DD HH:mm"));
+            let intersectDuration = intersectRestEnd.diff(intersectRestStart, "hours");
+            if(intersectDuration >= 7){
+              isPresent = true;
+              console.log("Night Rest found. Skipping this loop....................")
+              break;
+            }
+            console.log("Night Rest Not found")
+          }
+        }
+      }
+      !isPresent && console.log("Breaking loop and calculating breach Work Time....")
+      if(!isPresent){
+        // Find work that lies between end-7 to end
+        for(let i=0; i < eventsAfter.length - 1 ; i++){
+          let event = eventsAfter[i];
+          let nextEvent = eventsAfter[i+1];
+          if(event.eventType === 'work'){
+            let endMinus7 = end.clone().subtract(7, 'hours');
+            if(event.startTime.isSameOrBefore(end) && nextEvent.startTime.isAfter(endMinus7)){
+              breachInstant = event.startTime.isSameOrBefore(endMinus7) ? endMinus7.clone() : event.startTime; 
+            }
+          }
+        } 
+        break;
+      }
+      // increment instant to next day
+      instant.add(1, 'days');
+      if(end.isSameOrAfter(baseTime)){
+        break;
+      }
+    };
+  
+    console.log("CALCULATED NIGHT BREACH INSTANT", breachInstant.format("YYYY-MM-DD HH:mm"))
     return breachInstant;
   }
 
@@ -382,8 +452,7 @@ class BreachCalculation {
             right["continuousMinutes"] - left["continuousMinutes"]
         )[0]['continuousMinutes'] : null;
 
-      let breachInstant;
-      breachInstant = this.___calculateNightBreachInstant(
+      let breachInstant = this.___calculateNightBreachInstant(
         this.checklistItem,
         remainingNightBreaks,
         this.ewd
@@ -512,7 +581,8 @@ class BreachCalculation {
       
       breachInstant = this.___calculateNightBreachInstant(
         this.checklistItem,
-        remainingConsecutiveNightBreaks * 2
+        remainingConsecutiveNightBreaks * 2,
+        this.ewd
       );
       
       let breach = this.___categorizecontinuousStationaryBreakBreach(
