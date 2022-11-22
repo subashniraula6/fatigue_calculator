@@ -221,11 +221,20 @@ class TimeCalculation {
           breakEndTimes.push(...brk.endTimes);
         });
         let combinations = this.__getConsecutiveDaysCombinations(breakEndTimes);
-        let numberOfConsecutiveItems = 0;
-        combinations.forEach((combination) => {
-          numberOfConsecutiveItems += parseInt(combination.length / 2);
-        });
-        this.checklistItem["breaks"]["consecutiveNightBreaks"] = numberOfConsecutiveItems;
+        // let numberOfConsecutiveItems = 0;
+        // combinations.forEach((combination) => {
+        //   if(combination.length >= 2){
+        //     numberOfConsecutiveItems += parseInt(combination.length / 2);
+        //   }
+        // });
+        // this.checklistItem["breaks"]["consecutiveNightBreaks"] = numberOfConsecutiveItems;
+        
+        let maxCombinationsLength = Math.max(
+        ...combinations.map((combination) => combination.length)
+        );
+        if(maxCombinationsLength >= 2){
+          this.checklistItem["breaks"]["consecutiveNightBreaks"] = maxCombinationsLength;
+        }
       }
     }
   }

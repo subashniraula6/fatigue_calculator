@@ -399,7 +399,7 @@ class BreachCalculation {
     restBreakRules.forEach((restBreakRule) => {
       console.log("NIGHT REST BREACHES CALCULATION ");
 
-      if (!restBreakRule["nightBreaks"]) {
+      if (!restBreakRule["nightBreaks"] || !restBreakRule["consecutiveNightBreaks"]) {
         // Night break rule doesnt exist
         return;
       }
@@ -410,7 +410,7 @@ class BreachCalculation {
 
       let nightBreaksCount = validNightBreaks.length;
 
-      var ruleBreaksCount = restBreakRule["nightBreaks"];
+      var ruleBreaksCount = restBreakRule["nightBreaks"] + restBreakRule["consecutiveNightBreaks"] ? restBreakRule["consecutiveNightBreaks"] : 0;
 
       if (nightBreaksCount >= ruleBreaksCount) {
         // night breaks satisfies the rule
