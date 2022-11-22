@@ -232,9 +232,7 @@ class TimeCalculation {
         let maxCombinationsLength = Math.max(
         ...combinations.map((combination) => combination.length)
         );
-        if(maxCombinationsLength >= 2){
-          this.checklistItem["breaks"]["consecutiveNightBreaks"] = maxCombinationsLength;
-        }
+        this.checklistItem["breaks"]["consecutiveNightBreaks"] = maxCombinationsLength;
       }
     }
   }
