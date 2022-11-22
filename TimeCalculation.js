@@ -231,7 +231,7 @@ class TimeCalculation {
         
         let maxCombinationsLength = Math.max(
         ...combinations.map((combination) => combination.length)
-        );
+        ) || 0;
         this.checklistItem["breaks"]["consecutiveNightBreaks"] = maxCombinationsLength;
       }
     }
