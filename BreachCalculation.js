@@ -100,9 +100,6 @@ class BreachCalculation {
       };
       eventsAfter.unshift(firstEvent);
     }
-    console.log("events", ewd.map(event => ({...event, startTime: event.startTime.format("YYYY-MM-DD HH:mm")})));
-    console.log("breachInstant", breachInstant.format("YYYY-MM-DD HH:mm"))
-    console.log("eventsAfter", eventsAfter.map(event => ({...event, startTime: event.startTime.format("YYYY-MM-DD HH:mm")})));
     
     while(1){
       let start = instant.clone().add(7, 'hours').subtract(1, 'days').set({ h: 22, m: 0, s: 0 });
@@ -396,28 +393,37 @@ class BreachCalculation {
     var rule = this.ruleSets.find((rule) => rule["period"] / 60 === periodType);
     var restBreakRules = rule["rest"];
 
-    restBreakRules.forEach((restBreakRule) => {
-      console.log("NIGHT REST BREACHES CALCULATION ");
-
-      if (!restBreakRule["nightBreaks"] || !restBreakRule["consecutiveNightBreaks"]) {
-        // Night break rule doesnt exist
-        return;
+    var requiredNightBreaksCount = restBreakRules.reduce((accumulator, restBreakRule) => {
+      if(restBreakRule["nightBreaks"]){
+        return accumulator + restBreakRule["nightBreaks"];
       }
+      if (restBreakRule["consecutiveNightBreaks"]){
+        return accumulator + restBreakRule["consecutiveNightBreaks"];
+      }
+      return accumulator;
+    }, 0);
 
+    if(requiredNightBreaksCount > 0){
+      console.log("NIGHT REST BREACHES CALCULATION");
+      var restBreakRule = restBreakRules.find(restBreakRule => restBreakRule["nightBreaks"] >= 0);
+      
       let validNightBreaks = this.checklistItem["breaks"]["nightBreaks"].filter(
         (brk) => brk["continuousMinutes"] >= 7 * 60
       );
 
-      let nightBreaksCount = validNightBreaks.length;
+      let nightBreaksCount = 0;
+      validNightBreaks.forEach(brk => {
+        for(let i = 0; i < brk.count; i++){
+          nightBreaksCount++;
+        }
+      })
 
-      var ruleBreaksCount = restBreakRule["nightBreaks"] + restBreakRule["consecutiveNightBreaks"] ? restBreakRule["consecutiveNightBreaks"] : 0;
-
-      if (nightBreaksCount >= ruleBreaksCount) {
+      if (nightBreaksCount >= requiredNightBreaksCount) {
         // night breaks satisfies the rule
-        return;
+        return [];
       }
 
-      let remainingNightBreaks = ruleBreaksCount - nightBreaksCount;
+      let remainingNightBreaks = requiredNightBreaksCount - nightBreaksCount;
       // RemainingRestMinutes will always be positive at this stage
 
       // Remaining total night breaks
@@ -434,23 +440,35 @@ class BreachCalculation {
 
       // if period doesnt expire and remaining rest minutes less than or equal remaining toal minutes
       if (
-        totalPeriod < periodType * 60 &&
+        !isPeriodExceeded(this.checklistItem) &&
         remainingNightBreaks <= remainingTotalNightBreaks
       ) {
         // There is still time to take NIGHT REST before period expires
-        return;
+        return [];
       }
 
       // Find invalid nightbreaks less tha 7 hours
       let invalidNightBreaks = this.checklistItem["breaks"]["nightBreaks"]
       .filter((brk) => brk["continuousMinutes"] < 7 * 60);
-
-      // find largest rest time
-      var maxRestTime = invalidNightBreaks.length > 0
-      ? invalidNightBreaks.sort(
+      
+      // Find Max Rest Time
+      let maxRestTime = 0;
+      if(invalidNightBreaks.length > 0){
+        let sortedInvalidNightBreaks = invalidNightBreaks.sort(
           (left, right) =>
             right["continuousMinutes"] - left["continuousMinutes"]
-        )[0]['continuousMinutes'] : null;
+        );
+        let sortedMinutes = [];
+        sortedInvalidNightBreaks.forEach(brk => {
+          for(let i = 0; i < brk.count; i++){
+            sortedMinutes.push(brk['continuousMinutes']);
+          }
+        });
+        let candidateInvalidNightBreaks = sortedMinutes.slice(0, (remainingNightBreaks - remainingTotalNightBreaks));
+        if(candidateInvalidNightBreaks.length === (remainingNightBreaks - remainingTotalNightBreaks)){
+          maxRestTime = candidateInvalidNightBreaks[candidateInvalidNightBreaks.length - 1];
+        }
+      }
 
       let breachInstant = this.___calculateNightBreachInstant(
         this.checklistItem,
@@ -468,14 +486,14 @@ class BreachCalculation {
 
       // return breach included checklist item
       nightRestBreaches.push(breach);
-    });
+    };
     return nightRestBreaches;
   }
 
   __calculateConsecutiveNightRestBreaches() {
     let consecutiveNightBreaches = [];
 
-    let { periodType, lastEvent, totalPeriod, lastEventTime, periodTime, event } =
+    let { periodType, periodTime, event } =
       this.checklistItem;
     let { startTime: newEventStartTime, eventType: newEventType } = event;
 
@@ -502,25 +520,43 @@ class BreachCalculation {
         return;
       }
 
-      let remainingConsecutiveNightBreaks = ruleBreaksCount - consecutiveNightBreaks;
-      // RemainingConsecutiveNightBreaks will always be positive at this stage
-
       // Remaining total consecutive night breaks
       let timeCalculation = new TimeCalculation();
-      let totalNightBreaks = timeCalculation.__calculateNightDuration(
+      let totalFutureNightBreaks = timeCalculation.__calculateNightDuration(
         newEventStartTime,
         periodTime
       );
-      let validTotalNightBreaks = totalNightBreaks.filter(
+      let futureNightBreaks = totalFutureNightBreaks.filter(
+        (brk) => brk["continuousMinutes"] >= 7 * 60
+      ).length;
+
+      let validNightBreaks = this.checklistItem.breaks['nightBreaks'].filter(
         (brk) => brk["continuousMinutes"] >= 7 * 60
       );
 
-      let remainingTotalConsecutiveNightBreaks = parseInt(validTotalNightBreaks.length / 2);
+      // Check number of previous consecutive night rests
+      let previousConsecutiveNightRests = 0;
+      let endTimes = [];
+      validNightBreaks.forEach(nightBreak => {
+        endTimes.push(...nightBreak.endTimes);
+      });
+      let sortedEndTimes = endTimes.sort((left, right) => right.diff(left));
+      let startTime = newEventStartTime.clone();
+      sortedEndTimes.forEach(endTime => {
+        let start = startTime.startOf('day');
+        let end = startTime.set({ h: 8, m: 0, s: 0 });
+        if(endTime.isBetween(start, end, null, [])){
+          previousConsecutiveNightRests++;
+          startTime.subtract(1, 'days');
+        } else {
+          return;
+        }
+      });
 
-      // if period doesnt expire and remaining rest minutes less than or equal remaining toal minutes
+      // if period doesnt expire and remaining rest minutes less than or equal remaining total minutes
       if (
-        totalPeriod < periodType * 60 &&
-        remainingConsecutiveNightBreaks <= remainingTotalConsecutiveNightBreaks
+        !isPeriodExceeded(this.checklistItem) &&
+        futureNightBreaks + previousConsecutiveNightRests >= ruleBreaksCount
       ) {
         // There is still time to take CONSECUTIVE NIGHT REST before period expires
         return;
@@ -537,51 +573,35 @@ class BreachCalculation {
               right["continuousMinutes"] - left["continuousMinutes"]
           );
 
-      let validNightBreaks = this.checklistItem.breaks['nightBreaks'].filter(
-        (brk) => brk["continuousMinutes"] >= 7 * 60
-      );
       let breakEndTimes = [];
       validNightBreaks.forEach((brk) => {
         breakEndTimes.push(...brk.endTimes);
       });
-      var combinations = timeCalculation.__getConsecutiveDaysCombinations(breakEndTimes);
-      // Find combination that is not exactly pair
-      var oddCombinations = combinations.filter(combination => combination.length > 1 && (combination.length % 2 !== 0));
 
-      let maxConsecutiveRest = null;
-      if(oddCombinations.length > 0 && orderedInvalidNightRests.length > 0){
-        for(let i = 0; i < orderedInvalidNightRests.length; i++){
-          let invalidNightRest = orderedInvalidNightRests[i];
-          // Check if this night rest has valid night rest pair
-          let endTimes = invalidNightRest['endTimes'];
-          loop1: for(let j = 0; j < endTimes.length; j++){
-          loop2:  for(let k = 0; k < oddCombinations.length; k++){
-              let endTime = endTimes[j];
-              let combination = oddCombinations[k];
-
-              let firstValidRest = combination[0];
-              let lastValidRest = combination[combination.length - 1];
-              let firstRange = [firstValidRest.clone().subtract(2, 'days').set({ h: 22, m: 0, s: 0 }), 
-                                firstValidRest.clone().subtract(1, 'days').set({ h: 8, m: 0, s: 0 })];
-              let lastRange = [lastValidRest.clone().set({ h: 22, m: 0, s: 0 }), 
-                              firstValidRest.clone().add(1, 'days').set({ h: 8, m: 0, s: 0 })];
-              if(endTime.isAfter(firstRange[0]) && endTime.isSameOrBefore(firstRange[1]) || endTime.isAfter(lastRange[0]) && endTime.isSameOrBefore(lastRange[1])){
-                maxConsecutiveRest = {...invalidNightRest, endTimes: [endTime]};
-                break loop1;
+      let candidateNightRestMinutes = [];
+      validNightBreaks.forEach(nightBreak => {
+        nightBreak.endTimes.forEach(endTime => {
+          let previousDayStart = endTime.clone().subtract(2, 'days').set({ h: 22, m: 0, s: 0 });
+          let previousDayEnd = endTime.clone().subtract(1, 'days').set({ h: 8, m: 0, s: 0 });
+          let nextDayStart = endTime.clone().set({ h: 22, m: 0, s: 0 });
+          let nextDayEnd = endTime.clone().add(1, 'days').set({ h: 8, m: 0, s: 0 });
+          // Check if any invalid night breaks lies in this range
+          invalidNightBreaks.forEach(invalidBrk => {
+            invalidBrk.endTimes.forEach(endT => {
+              if(endT.isBetween(previousDayStart, previousDayEnd, null, []) || endT.isBetween(nextDayStart, nextDayEnd, null, [])){
+                candidateNightRestMinutes.push(invalidBrk['continuousMinutes']);
               }
-            }
-          }
-        }
-      };
-      
-      var maxRestTime = maxConsecutiveRest ? maxConsecutiveRest['continuousMinutes'] : 0;
+            })
+          });
+        });
+      });
+      var maxRestTime = Math.max(...candidateNightRestMinutes);
 
       let breachInstant = null;
 
-      
       breachInstant = this.___calculateNightBreachInstant(
         this.checklistItem,
-        remainingConsecutiveNightBreaks * 2,
+        ruleBreaksCount,
         this.ewd
       );
       

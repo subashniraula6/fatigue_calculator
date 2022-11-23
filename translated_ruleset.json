@@ -313,7 +313,7 @@
                         {
                             "level": "critical",
                             "from": 0,
-                            "to": 0.5
+                            "to": 5.5
                         },
                         {
                             "level": "minor",
