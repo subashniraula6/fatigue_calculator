@@ -543,7 +543,7 @@ class BreachCalculation {
       let sortedEndTimes = endTimes.sort((left, right) => right.diff(left));
       let startTime = newEventStartTime.clone();
       sortedEndTimes.forEach(endTime => {
-        let start = startTime.startOf('day');
+        let start = startTime.clone().startOf('day');
         let end = startTime.set({ h: 8, m: 0, s: 0 });
         if(endTime.isBetween(start, end, null, [])){
           previousConsecutiveNightRests++;
@@ -552,7 +552,7 @@ class BreachCalculation {
           return;
         }
       });
-
+      
       // if period doesnt expire and remaining rest minutes less than or equal remaining total minutes
       if (
         !isPeriodExceeded(this.checklistItem) &&
