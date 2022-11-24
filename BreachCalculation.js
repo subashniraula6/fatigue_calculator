@@ -68,8 +68,7 @@ class BreachCalculation {
     };
   }
 
-  ___calculateNightBreachInstant(checklistItem, numberOfBreaks, ewd) {
-    let { periodTime } = checklistItem;
+  ___calculateNightBreachInstant(periodTime, numberOfBreaks, ewd = null) {
     let nightStart = periodTime
       .clone()
       .subtract(1, "days")
@@ -88,6 +87,8 @@ class BreachCalculation {
       .clone()
       .subtract(numberOfBreaks - 1, "days")
       .subtract(7, "hours");
+
+    if(!ewd) return breachInstant; 
 
     // Find possible next breach instant that breaks night break
     let instant = breachInstant.clone();
@@ -154,6 +155,10 @@ class BreachCalculation {
         break;
       }
     };
+  
+    console.log("CALCULATED NIGHT BREACH INSTANT", breachInstant.format("YYYY-MM-DD HH:mm"))
+    return breachInstant;
+  }
   
     console.log("CALCULATED NIGHT BREACH INSTANT", breachInstant.format("YYYY-MM-DD HH:mm"))
     return breachInstant;
@@ -471,7 +476,7 @@ class BreachCalculation {
       }
 
       let breachInstant = this.___calculateNightBreachInstant(
-        this.checklistItem,
+        periodTime,
         remainingNightBreaks,
         this.ewd
       );
@@ -600,7 +605,7 @@ class BreachCalculation {
       let breachInstant = null;
 
       breachInstant = this.___calculateNightBreachInstant(
-        this.checklistItem,
+        periodTime,
         ruleBreaksCount,
         this.ewd
       );
