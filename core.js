@@ -81,7 +81,7 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
           checklistItem,
           rule
         );
-        function ___checkLastRelevantContinuousBreak(checklistItem, rule) {
+        function ___checkLastRelevantContinuousBreak() {
           console.log("Checking last relevant continuous rest");
           let breakIndex = checklistItem["breaks"][
             "continuousBreaks"
@@ -195,7 +195,7 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
         breaches.forEach(breach => {
           __pushOrReplace(checklistItem, breach)
         });
-        // checklistItem.breach.breaches.push(...breaches);    
+        // checklistItem.breaches.push(...breaches);    
         breachList.push(checklistItem);
       }
     });
@@ -203,13 +203,13 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
   }
 
   function __pushOrReplace(checklistItem, breach) {
-    let idx = checklistItem.breach.breaches.findIndex(
+    let idx = checklistItem.breaches.findIndex(
       (item) => item["type"] === breach["type"]
     );
     if (idx === -1) {
-      checklistItem.breach["breaches"].push(breach);
+      checklistItem["breaches"].push(breach);
     } else {
-      checklistItem.breach["breaches"][idx] = breach;
+      checklistItem["breaches"][idx] = breach;
     }
   }
 
@@ -233,26 +233,7 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
     return checklist.filter((updatedItem) => {
       return updatedItem.totalPeriod / 60 < updatedItem.periodType;
     });
-  }
-
-  function requiresMaxWorkCheck(rule) {
-    if (rule["work"].length > 0 && rule["work"][0]["maximumWorkTime"] > 0) {
-      return true;
-    } else return false;
-  }
-
-  function requiresRestBreakCheck(rule, type) {
-    if (rule["rest"].length === 0) return false;
-    let idx = rule["rest"].findIndex((rest) => {
-      if (rest[type] > 0) {
-        return true;
-      }
-    });
-    if (idx === -1) return false;
-    return true;
-  }
-
-  
+  }  
 
   function __createChecklistItem(event, rule) {
     return {
@@ -273,24 +254,7 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
       }),
       lastEvent: event["eventType"],
       lastEventTime: toUtc(event["startTime"]),
-      breach: {
-        status: {
-          maxWorkBreach: requiresMaxWorkCheck(rule) ? null : false,
-          continuousBreakBreach: requiresRestBreakCheck(rule, "continuousBreak")
-            ? null
-            : false,
-          nightBreaksBreach: requiresRestBreakCheck(rule, "nightBreaks")
-            ? null
-            : false,
-          consecutiveNightBreaksBreach: requiresRestBreakCheck(
-            rule,
-            "consecutiveNightBreaks"
-          )
-            ? null
-            : false,
-        },
-        breaches: [],
-      },
+      breaches: [],
       lastRelevantBreak: false,
       lastRelevantBreakAtThisEvent: false
     };

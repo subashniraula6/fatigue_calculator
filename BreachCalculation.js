@@ -270,7 +270,7 @@ class BreachCalculation {
   }
 
   __pushOrReplace(checklistItem, breach) {
-    let idx = checklistItem.breach.breaches.findIndex(
+    let idx = checklistItem.breaches.findIndex(
       (item) => item["type"] === breach["type"]
     );
     if (idx === -1) {
