@@ -1,0 +1,12 @@
+body {
+  box-sizing: border-box;
+  font-family: monospace;
+  display: grid;
+ }
+
+ .wrapper {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
