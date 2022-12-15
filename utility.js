@@ -38,4 +38,44 @@ function fetchRule(checklistItem, ruleSets) {
   );
 }
 
-module.exports = { processEvent, toUtc, minutesToHourMinutes, isPeriodExceeded, fetchRule };
+// Deep clone checklist
+function cloneChecklist(checklist) {
+  return checklist.map(checklistItem => {
+    let clonedChecklistItem = {}
+    for(const item in checklistItem){
+      let key = item;
+      let value = checklistItem[key];
+      switch (item) {
+        case 'periodStart':
+        case 'periodTime':
+        case 'lastEventTime':
+          clonedChecklistItem[item] = value.clone();
+          break;
+        
+        case 'breaks':
+          clonedChecklistItem[item] = {
+            ...value,
+            continuousBreaks: 
+              value.continuousBreaks.map(brk => ({...brk, endTimes: brk.endTimes.map(time => time.clone())})),
+            nightBreaks: 
+              value.nightBreaks.map(brk => ({...brk, endTimes: brk.endTimes.map(time => time.clone())}))
+          };
+          break;
+          
+        case 'event':
+          clonedChecklistItem[item] = {
+            ...value,
+            startTime: value.startTime.clone() 
+          };
+          break;
+          
+        default:
+          clonedChecklistItem[item] = value;
+          break;
+      }
+    }
+    return clonedChecklistItem;
+  })
+}
+
+module.exports = { processEvent, toUtc, minutesToHourMinutes, isPeriodExceeded, fetchRule, cloneChecklist };

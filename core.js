@@ -5,17 +5,19 @@ var processEvent = require("./utility")['processEvent'];
 var toUtc = require("./utility")['toUtc'];
 var isPeriodExceeded = require('./utility')['isPeriodExceeded'];
 var fetchRule = require('./utility')['fetchRule'];
+var cloneChecklist = require('./utility')['cloneChecklist']
 
 function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
   function _handleEvent(event) {
     // process event
     var event = processEvent(event);
+    let clonedChecklist = cloneChecklist(checklist);
 
     console.log("NEW EVENT", event);
     console.log("=================================================");
 
     // Update checklist
-    let updatedChecklist = _updateCurrentChecklist(event, checklist);
+    let updatedChecklist = _updateCurrentChecklist(event, clonedChecklist);
 
     // Calculate breach
     let breaches = _calculateBreach(updatedChecklist, ewd);
@@ -24,14 +26,15 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
     let newChecklist = _addChecklistItems(event, updatedChecklist);
 
     // Cleanup checklist
-    updatedChecklist = _cleanupChecklist(updatedChecklist);
+    updatedChecklist = _cleanupChecklist(updatedChecklist, event);
 
     // Change last event
     updatedChecklist = _changeLastEvent(updatedChecklist, event);
-
-    console.log("Checklist at the end", [...updatedChecklist, ...newChecklist]);
-
-    return { checklist: [...updatedChecklist, ...newChecklist], breaches };
+    
+    return { 
+      checklist: event.isTestEvent ? cloneChecklist(checklist) : [...updatedChecklist, ...newChecklist], 
+      breaches 
+    };
   }
 
   function _updateCurrentChecklist(_event, checklist) {
@@ -214,6 +217,9 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
   }
 
   function _changeLastEvent(checklist, event) {
+    // Do nothing if event is 'test'
+    if(event.isTestEvent) return checklist;
+
     //CHANGING LAST EVENT INFO
     return checklist.map((checklistItem) => {
       return _changeLastEventForChecklistItem(checklistItem, event);
@@ -229,7 +235,10 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
     };
   }
 
-  function _cleanupChecklist(checklist) {
+  function _cleanupChecklist(checklist, event) {
+    // Return original checklist if event is 'test'
+    if(event.isTestEvent) return checklist;
+
     return checklist.filter((updatedItem) => {
       return updatedItem.totalPeriod / 60 < updatedItem.periodType;
     });
@@ -295,6 +304,9 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
   }
 
   function _addChecklistItems(event, updatedChecklist) {
+    // Return empty array if event is 'test'
+    if(event.isTestEvent) return [];
+    
     let newChecklist = [];
     let noRelevantChecklists = __addIfNoRelevantRestBreak(updatedChecklist, event);
     noRelevantChecklists.length > 0 &&
@@ -389,7 +401,10 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
       checklist.length = 0;
       checklist.push(...updatedChecklist);
 
-      breachList.push(...breaches);
+      // Push for real event only
+      !event.isTestEvent &&
+        breachList.push(...breaches);
+      
       // Remove reduntant breaches
       let toRemoveIndices = [];
       for (let i = 0; i < breachList.length - 1; i++) {
@@ -401,8 +416,6 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
             let earlyBreachIndex = breachList[i]["totalPeriod"] > breachList[j]["totalPeriod"] ? 
             j : i;
             toRemoveIndices.push(earlyBreachIndex);
-            // //remove early same type breach
-            // breachList.splice(earlyBreachIndex, 1);
           }
         }
       }
