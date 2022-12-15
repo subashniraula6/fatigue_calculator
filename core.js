@@ -11,8 +11,6 @@ function BreachCalculator(events, ruleSets, checklist = [], ewd = []) {
   function _handleEvent(event) {
     // process event
     var event = processEvent(event);
-    let clonedChecklist = cloneChecklist(checklist);
-
     console.log("NEW EVENT", event);
     console.log("=================================================");
 
